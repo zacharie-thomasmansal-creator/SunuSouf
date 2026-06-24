@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">SunuSouf — Terrains & Fruits du Sénégal</title>
+<meta name="description" id="page-meta-desc" content="Plateforme de mise en relation pour acheter, vendre des terrains agricoles et des fruits au Sénégal.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --or:#C8860A;--or-light:#F5A623;--or-pale:#FFF8ED;--or-border:#E8C87A;
+  --vert:#2D6A4F;--vert-light:#52B788;
+  --noir:#0F0D0A;--gris-fonce:#2C2A27;--gris:#5A5650;--gris-mid:#9A9590;
+  --gris-clair:#E8E4DE;--fond:#FAF8F4;--blanc:#FFFFFF;
+  --rouge:#C0392B;--rouge-pale:#FFF0EE;
+  --radius-sm:8px;--radius:14px;--radius-lg:22px;
+  --ombre:0 4px 24px rgba(15,13,10,0.10);--ombre-lg:0 12px 48px rgba(15,13,10,0.14);
+  --font-main:'Sora',sans-serif;--font-serif:'Instrument Serif',Georgia,serif;
+  --transition:0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-main);background:var(--fond);color:var(--noir);min-height:100vh;font-size:15px;line-height:1.6;}
+
+/* ═══ HEADER ═══ */
+.header{position:sticky;top:0;z-index:100;background:var(--blanc);border-bottom:1px solid var(--gris-clair);box-shadow:0 2px 16px rgba(15,13,10,0.07);padding:0 24px;display:flex;align-items:center;gap:16px;height:68px;}
+.header-logo{display:flex;align-items:center;text-decoration:none;flex-shrink:0;cursor:pointer;}
+.header-logo img{height:48px;width:auto;max-width:160px;object-fit:contain;}
+.header-search{flex:1;display:flex;gap:8px;max-width:600px;}
+.header-search input{flex:1;padding:10px 16px;border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:14px;background:var(--fond);color:var(--noir);outline:none;transition:border-color var(--transition);}
+.header-search input:focus{border-color:var(--or);background:var(--blanc);}
+.header-search input::placeholder{color:var(--gris-mid);}
+.header-search select{padding:10px 12px;border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:14px;background:var(--fond);color:var(--gris);cursor:pointer;outline:none;}
+.header-search .btn-recherche{padding:10px 18px;background:var(--or);color:var(--blanc);border:none;border-radius:var(--radius-sm);font-family:var(--font-main);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background var(--transition);}
+.header-search .btn-recherche:hover{background:var(--or-light);}
+.header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+
+.credits-badge{display:flex;align-items:center;gap:6px;background:var(--or-pale);border:1.5px solid var(--or-border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--or);cursor:pointer;transition:all var(--transition);white-space:nowrap;}
+.credits-badge:hover{background:var(--or);color:var(--blanc);border-color:var(--or);}
+.credits-badge .cnum{font-size:15px;font-weight:800;}
+
+.btn-principal{padding:10px 20px;background:var(--or);color:var(--blanc);border:none;border-radius:var(--radius-sm);font-family:var(--font-main);font-size:14px;font-weight:600;cursor:pointer;transition:background var(--transition),transform var(--transition);white-space:nowrap;}
+.btn-principal:hover{background:var(--or-light);transform:translateY(-1px);}
+.btn-secondaire{padding:10px 20px;background:transparent;color:var(--or);border:1.5px solid var(--or-border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--transition);white-space:nowrap;}
+.btn-secondaire:hover{background:var(--or-pale);}
+.btn-danger{padding:7px 14px;background:transparent;color:var(--rouge);border:1.5px solid #e8b4b0;border-radius:var(--radius-sm);font-family:var(--font-main);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--transition);}
+.btn-danger:hover{background:var(--rouge-pale);}
+.btn-user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--or),var(--or-light));border:none;cursor:pointer;font-size:16px;font-weight:700;color:var(--blanc);box-shadow:0 3px 12px rgba(200,134,10,0.35);transition:transform var(--transition);flex-shrink:0;}
+.btn-user-avatar:hover{transform:scale(1.08);}
+
+.user-menu-wrapper{position:relative;}
+.user-dropdown{position:absolute;top:calc(100% + 10px);right:0;min-width:248px;background:var(--blanc);border-radius:var(--radius);box-shadow:var(--ombre-lg);border:1px solid var(--gris-clair);z-index:200;overflow:hidden;animation:fadeDown 0.18s ease;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.user-dropdown-header{padding:16px 18px 12px;background:linear-gradient(135deg,var(--or-pale),var(--blanc));border-bottom:1px solid var(--gris-clair);}
+.user-dropdown-header .uname{display:block;font-weight:700;color:var(--noir);font-size:15px;}
+.user-dropdown-header .usub{display:block;font-size:12px;color:var(--gris-mid);margin-top:2px;}
+.dd-credits{padding:12px 18px;background:linear-gradient(135deg,var(--or-pale),#fff9f0);border-bottom:1px solid var(--or-border);display:flex;align-items:center;justify-content:space-between;}
+.dd-credits .dlabel{font-size:11px;color:var(--gris);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.dd-credits .dval{font-size:22px;font-weight:900;color:var(--or);}
+.dd-credits .dacheter{font-size:12px;color:var(--or);font-weight:700;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:var(--font-main);padding:0;}
+.user-dropdown-list{list-style:none;padding:6px 0;}
+.user-dropdown-list li button{width:100%;background:none;border:none;padding:11px 18px;text-align:left;font-family:var(--font-main);font-size:14px;color:var(--gris-fonce);cursor:pointer;transition:background var(--transition);font-weight:500;}
+.user-dropdown-list li button:hover{background:var(--or-pale);color:var(--or);}
+.user-dropdown-list li button.deconnexion{color:var(--rouge);}
+.user-dropdown-list li button.deconnexion:hover{background:var(--rouge-pale);}
+.dd-sep{border:none;border-top:1px solid var(--gris-clair);margin:4px 0;}
+
+/* ═══ HERO ═══ */
+.choice-panel{padding:56px 24px 48px;text-align:center;background:linear-gradient(180deg,var(--blanc) 0%,var(--fond) 100%);border-bottom:1px solid var(--gris-clair);}
+.choice-eyebrow{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--or);margin-bottom:12px;}
+.choice-panel h1{font-family:var(--font-serif);font-size:clamp(2rem,5vw,3.2rem);color:var(--noir);line-height:1.15;margin-bottom:14px;}
+.choice-panel h1 em{color:var(--or);font-style:italic;}
+.choice-panel p{color:var(--gris);font-size:1.05rem;max-width:480px;margin:0 auto 32px;}
+.choice-actions{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;}
+.choice-btn{display:flex;align-items:center;gap:10px;padding:14px 28px;border-radius:var(--radius);font-family:var(--font-main);font-size:15px;font-weight:700;cursor:pointer;transition:all var(--transition);border:2px solid transparent;}
+.choice-btn-terrain{background:var(--or);color:var(--blanc);box-shadow:0 4px 20px rgba(200,134,10,0.30);}
+.choice-btn-terrain:hover{background:var(--or-light);transform:translateY(-2px);}
+.choice-btn-fruit{background:var(--vert);color:var(--blanc);box-shadow:0 4px 20px rgba(45,106,79,0.25);}
+.choice-btn-fruit:hover{background:var(--vert-light);transform:translateY(-2px);}
+
+/* ═══ FILTRES ═══ */
+.filtres-bar{background:var(--blanc);border-bottom:1px solid var(--gris-clair);padding:14px 24px;display:none;}
+.filtres-bar.visible{display:block;}
+.filtres-inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filtre-select{padding:8px 12px;border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:13px;background:var(--fond);color:var(--gris-fonce);cursor:pointer;outline:none;transition:border-color var(--transition);}
+.filtre-select:focus{border-color:var(--or);}
+.filtre-reset{padding:8px 14px;background:transparent;color:var(--gris);border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:13px;cursor:pointer;transition:all var(--transition);}
+.filtre-reset:hover{color:var(--rouge);border-color:#e8b4b0;}
+.filtre-count{font-size:13px;color:var(--gris-mid);margin-left:auto;}
+
+/* ═══ LISTES ═══ */
+.liste-section{padding:40px 24px 60px;}
+.liste-container{max-width:1100px;margin:0 auto;}
+.section-heading{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.section-heading h2{font-family:var(--font-serif);font-size:1.9rem;color:var(--noir);}
+#liste-terrains,#liste-fruits,#mes-annonces-terrains,#mes-annonces-fruits{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.chargement,.vide,.erreur{grid-column:1/-1;padding:40px;text-align:center;color:var(--gris);background:var(--blanc);border-radius:var(--radius);border:1.5px dashed var(--gris-clair);}
+.erreur{color:var(--rouge);border-color:#e8b4b0;background:var(--rouge-pale);}
+
+/* ═══ PAGINATION ═══ */
+.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:36px;}
+.page-btn{padding:8px 14px;border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);background:var(--blanc);font-family:var(--font-main);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--transition);color:var(--gris-fonce);}
+.page-btn:hover:not(:disabled){border-color:var(--or);color:var(--or);}
+.page-btn.active{background:var(--or);color:var(--blanc);border-color:var(--or);}
+.page-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.page-info{font-size:13px;color:var(--gris-mid);padding:0 8px;}
+
+/* ═══ CARDS ═══ */
+.card-annonce{background:var(--blanc);border-radius:var(--radius);border:1.5px solid var(--gris-clair);overflow:hidden;cursor:pointer;transition:transform var(--transition),box-shadow var(--transition),border-color var(--transition);display:flex;flex-direction:column;}
+.card-annonce:hover{transform:translateY(-4px);box-shadow:var(--ombre-lg);border-color:var(--or-border);}
+.card-annonce:focus-visible{outline:3px solid var(--or);outline-offset:2px;}
+.card-img{width:100%;height:190px;overflow:hidden;background:linear-gradient(135deg,#f0ece4,#e8e0d0);flex-shrink:0;}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease;}
+.card-annonce:hover .card-img img{transform:scale(1.05);}
+.card-img-placeholder{width:100%;height:190px;background:linear-gradient(135deg,#f0ece4,#e8e0d0);display:flex;align-items:center;justify-content:center;color:var(--gris-mid);font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.card-body{padding:18px 18px 12px;flex:1;display:flex;flex-direction:column;gap:8px;}
+.card-titre{font-size:1.05rem;font-weight:700;color:var(--noir);line-height:1.35;}
+.card-prix-line{font-size:1rem;font-weight:800;color:var(--or);}
+.card-meta-box{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.meta-cell{font-size:12.5px;color:var(--gris);background:var(--fond);border-radius:6px;padding:4px 10px;display:flex;gap:4px;}
+.meta-cell strong{color:var(--gris-fonce);margin-right:2px;}
+.card-footer{padding:12px 18px 14px;border-top:1px solid var(--gris-clair);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.card-contact-info{font-size:13px;color:var(--gris-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;}
+.card-actions{display:flex;gap:6px;flex-shrink:0;}
+.btn-contacter{padding:7px 16px;background:var(--or-pale);color:var(--or);border:1.5px solid var(--or-border);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:13px;font-weight:700;cursor:pointer;transition:all var(--transition);white-space:nowrap;}
+.btn-contacter:hover{background:var(--or);color:var(--blanc);}
+.btn-contacter-wa{padding:7px 14px;background:#25D366;color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font-main);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity var(--transition);}
+.btn-contacter-wa:hover{opacity:0.85;}
+
+/* ═══ MES ANNONCES ═══ */
+.mes-annonces-panel{display:flex;flex-direction:column;gap:40px;}
+.mes-annonces-block h3{font-family:var(--font-serif);font-size:1.3rem;color:var(--gris-fonce);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--or-pale);}
+
+/* ═══ PAGE DETAIL ═══ */
+.detail-page-container{max-width:780px;}
+.detail-page-title{font-family:var(--font-serif);font-size:clamp(1.6rem,4vw,2.2rem);color:var(--noir);line-height:1.2;margin:20px 0 0;}
+.detail-prix-block{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:16px 0 20px;}
+.detail-prix{font-size:1.8rem;font-weight:900;color:var(--or);background:var(--or-pale);border:2px solid var(--or-border);border-radius:var(--radius);padding:10px 22px;}
+.detail-date-badge{font-size:13px;color:var(--gris-mid);background:var(--fond);border:1px solid var(--gris-clair);border-radius:20px;padding:6px 14px;font-weight:600;}
+.detail-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:20px 0;}
+.detail-gallery-item{border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:4/3;background:var(--gris-clair);}
+.detail-gallery-item img{width:100%;height:100%;object-fit:cover;}
+.detail-page-map{height:260px;border-radius:var(--radius);overflow:hidden;margin:20px 0;border:1.5px solid var(--gris-clair);}
+.detail-page-meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;}
+.detail-page-meta span{font-size:13.5px;color:var(--gris-fonce);background:var(--fond);border:1px solid var(--gris-clair);border-radius:8px;padding:6px 14px;}
+.detail-page-stats span{background:#EEF7F2;border-color:#b8dfc8;color:var(--vert);}
+.detail-page-recommandation{background:linear-gradient(135deg,#EEF7F2,#f7fdf9);border:1.5px solid #b8dfc8;border-radius:var(--radius);padding:20px 24px;margin:20px 0;}
+.detail-page-recommandation h2{font-family:var(--font-serif);font-size:1.15rem;color:var(--vert);margin-bottom:14px;}
+.detail-row{font-size:14px;color:var(--gris-fonce);margin-bottom:8px;line-height:1.6;}
+.detail-row strong{color:var(--vert);}
+.detail-description-block{background:var(--fond);border-left:4px solid var(--or);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:18px 22px;margin:20px 0;color:var(--gris-fonce);line-height:1.8;}
+.detail-description-block h3{font-size:11px;font-weight:700;color:var(--gris-mid);margin:0 0 10px;text-transform:uppercase;letter-spacing:1.5px;}
+.detail-share-block{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0;align-items:center;}
+.btn-share-whatsapp{background:#25D366;color:white;border:none;border-radius:20px;padding:10px 20px;font-family:var(--font-main);font-size:14px;font-weight:700;cursor:pointer;transition:opacity var(--transition);}
+.btn-share-whatsapp:hover{opacity:0.85;}
+.btn-share-link{background:var(--fond);color:var(--gris-fonce);border:1.5px solid var(--gris-clair);border-radius:20px;padding:10px 20px;font-family:var(--font-main);font-size:14px;font-weight:700;cursor:pointer;transition:all var(--transition);}
+.btn-share-link:hover{border-color:var(--or);color:var(--or);}
+.copy-toast{display:none;background:var(--noir);color:white;padding:8px 16px;border-radius:20px;font-size:13px;align-items:center;}
+.copy-toast.show{display:flex;}
+.detail-action-group{margin:20px 0 0;display:flex;gap:12px;flex-wrap:wrap;}
+.detail-action-group .btn-principal{padding:13px 28px;font-size:15px;}
+.btn-whatsapp{padding:13px 28px;font-size:15px;background:#25D366;color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font-main);font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity var(--transition);}
+.btn-whatsapp:hover{opacity:0.85;}
+/* Masquer le bouton Appeler si contact = email */
+.btn-appel-masque{display:none!important;}
+
+/* ═══ BTN FLOTTANT ═══ */
+.btn-seconnecter-flottant{position:fixed;bottom:28px;right:28px;z-index:500;padding:14px 24px;background:var(--or);color:var(--blanc);border:none;border-radius:50px;font-family:var(--font-main);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 28px rgba(200,134,10,0.45);transition:all var(--transition);}
+.btn-seconnecter-flottant:hover{background:var(--or-light);transform:translateY(-3px);}
+
+/* ═══ MODALES ═══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,13,10,0.55);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay.active{display:flex;}
+.modal-card{background:var(--blanc);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:var(--ombre-lg);animation:modalUp 0.25s ease;}
+@keyframes modalUp{from{opacity:0;transform:translateY(20px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:var(--fond);border:1.5px solid var(--gris-clair);font-size:18px;cursor:pointer;color:var(--gris);display:flex;align-items:center;justify-content:center;transition:all var(--transition);}
+.modal-close:hover{background:var(--gris-clair);}
+.modal-card h2{font-family:var(--font-serif);font-size:1.6rem;color:var(--noir);margin-bottom:8px;}
+.modal-description{color:var(--gris);font-size:14px;margin-bottom:24px;}
+.social-login{display:flex;flex-direction:column;gap:12px;}
+.btn-google{padding:13px 20px;background:var(--blanc);color:var(--noir);border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:15px;font-weight:700;cursor:pointer;transition:background var(--transition);}
+.btn-google:hover{background:var(--fond);}
+.form-error{color:var(--rouge);font-size:13px;margin-top:8px;min-height:20px;}
+
+.gate-card{max-width:380px;text-align:center;}
+.gate-icon{font-size:52px;margin-bottom:16px;}
+.gate-card h2{margin-bottom:8px;}
+.gate-card p{color:var(--gris);font-size:14px;margin-bottom:24px;line-height:1.7;}
+.gate-btns{display:flex;flex-direction:column;gap:10px;}
+.gate-btns .btn-principal,.gate-btns .btn-secondaire{width:100%;padding:13px;text-align:center;font-size:15px;}
+
+.pay-card{max-width:390px;}
+.forfait-recap{background:var(--or-pale);border:1.5px solid var(--or-border);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;}
+.forfait-recap .rname{font-weight:700;color:var(--noir);}
+.forfait-recap .rprice{font-size:1.4rem;font-weight:900;color:var(--or);}
+.pay-label{font-size:11px;font-weight:700;color:var(--gris-mid);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
+.pay-btns{display:flex;flex-direction:column;gap:10px;}
+.pay-btn{padding:13px 18px;border-radius:var(--radius-sm);border:2px solid;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--font-main);font-size:14px;font-weight:700;cursor:pointer;transition:all var(--transition);}
+.pay-orange{background:var(--blanc);border-color:#FF6B00;color:#FF6B00;}
+.pay-orange:hover{background:#FF6B00;color:var(--blanc);}
+.pay-wave{background:var(--blanc);border-color:#00A9E0;color:#00A9E0;}
+.pay-wave:hover{background:#00A9E0;color:var(--blanc);}
+.pay-note{font-size:12px;color:var(--gris-mid);text-align:center;margin-top:14px;line-height:1.7;}
+
+/* ═══ FORMULAIRES ═══ */
+.poster-annonce,.fruits-section{padding:0;max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.4s ease;}
+.poster-annonce.active,.fruits-section.active{max-height:4000px;padding:40px 24px 60px;}
+.annonce-form,.fruits-card{max-width:680px;margin:0 auto;background:var(--blanc);border-radius:var(--radius-lg);padding:36px 40px;border:1.5px solid var(--gris-clair);box-shadow:var(--ombre);}
+.annonce-form h2,.fruits-card h2{font-family:var(--font-serif);font-size:1.7rem;color:var(--noir);margin-bottom:6px;}
+.annonce-note{color:var(--gris);font-size:13.5px;background:var(--or-pale);border:1px solid var(--or-border);border-radius:var(--radius-sm);padding:10px 14px;margin:14px 0 22px;}
+.annonce-input-group{margin-bottom:18px;display:flex;flex-direction:column;gap:6px;}
+.annonce-input-group label{font-size:13.5px;font-weight:600;color:var(--gris-fonce);}
+.annonce-input-group input[type="text"],
+.annonce-input-group input[type="number"],
+.annonce-input-group select,
+.annonce-input-group textarea{padding:11px 15px;border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);font-family:var(--font-main);font-size:14px;color:var(--noir);background:var(--fond);outline:none;transition:border-color var(--transition);}
+.annonce-input-group input:focus,.annonce-input-group select:focus,.annonce-input-group textarea:focus{border-color:var(--or);background:var(--blanc);}
+.annonce-input-group textarea{resize:vertical;min-height:90px;}
+.annonce-input-group input[type="file"]{font-size:13px;color:var(--gris);padding:8px 12px;}
+.annonce-checkbox-group label{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;}
+.annonce-checkbox-group input[type="checkbox"]{width:17px;height:17px;accent-color:var(--or);}
+.form-feedback{border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:14px;font-size:14px;font-weight:600;}
+.preview-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+.preview-gallery div{border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:1;}
+.preview-gallery img{width:100%;height:100%;object-fit:cover;}
+.file-size-warn{font-size:12px;color:var(--rouge);margin-top:4px;display:none;}
+
+/* ═══ SECTION CRÉDITS ═══ */
+#section-credits{display:none;}
+.credits-hero{padding:56px 24px 44px;text-align:center;background:linear-gradient(180deg,var(--blanc) 0%,var(--fond) 100%);border-bottom:1px solid var(--gris-clair);}
+.credits-hero .eyebrow{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--or);margin-bottom:12px;}
+.credits-hero h2{font-family:var(--font-serif);font-size:clamp(1.9rem,4vw,2.9rem);color:var(--noir);margin-bottom:12px;line-height:1.15;}
+.credits-hero h2 em{color:var(--or);font-style:italic;}
+.credits-hero p{color:var(--gris);max-width:480px;margin:0 auto 24px;}
+.credit-pill{display:inline-flex;align-items:center;gap:10px;background:var(--or-pale);border:1.5px solid var(--or-border);border-radius:50px;padding:10px 22px;font-size:14px;font-weight:700;color:var(--gris-fonce);}
+.credit-pill em{color:var(--or);font-style:normal;}
+.credits-how{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:0 auto;padding:40px 24px 0;}
+.how-card{background:var(--blanc);border-radius:var(--radius);border:1.5px solid var(--gris-clair);padding:22px 20px;}
+.how-icon{font-size:26px;margin-bottom:8px;}
+.how-title{font-weight:700;color:var(--noir);margin-bottom:4px;}
+.how-desc{font-size:13.5px;color:var(--gris);line-height:1.6;}
+.forfaits-wrapper{max-width:1160px;margin:0 auto;padding:48px 24px 56px;}
+.forfaits-title{font-family:var(--font-serif);font-size:1.9rem;color:var(--noir);text-align:center;margin-bottom:36px;}
+.forfaits-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.forfait-card{background:var(--blanc);border-radius:var(--radius-lg);border:2px solid var(--gris-clair);display:flex;flex-direction:column;overflow:hidden;transition:transform var(--transition),box-shadow var(--transition),border-color var(--transition);position:relative;}
+.forfait-card:hover{transform:translateY(-5px);box-shadow:var(--ombre-lg);border-color:var(--or-border);}
+.forfait-card.pop{border-color:var(--or);box-shadow:0 8px 32px rgba(200,134,10,0.18);}
+.badge-pop{position:absolute;top:14px;right:14px;background:linear-gradient(135deg,var(--or),var(--or-light));color:var(--blanc);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:20px;}
+.forfait-hd{padding:24px 22px 18px;border-bottom:1px solid var(--gris-clair);}
+.forfait-num{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gris-mid);margin-bottom:6px;}
+.forfait-name{font-family:var(--font-serif);font-size:1.3rem;color:var(--noir);margin-bottom:10px;}
+.forfait-save{font-size:1rem;font-weight:800;color:var(--or);}
+.forfait-save.zero{color:var(--gris-mid);}
+.forfait-features{padding:18px 22px;flex:1;list-style:none;display:flex;flex-direction:column;gap:9px;}
+.forfait-features li{font-size:13px;color:var(--gris-fonce);display:flex;align-items:flex-start;gap:8px;line-height:1.45;}
+.forfait-features li::before{content:'✓';color:var(--or);font-weight:700;font-size:12px;flex-shrink:0;margin-top:1px;}
+.forfait-features li.bonus{color:var(--vert);font-weight:600;}
+.forfait-features li.bonus::before{color:var(--vert);}
+.forfait-price-blk{padding:14px 22px;border-top:1px solid var(--gris-clair);background:var(--or-pale);}
+.forfait-price{font-size:1rem;font-weight:800;color:var(--noir);}
+.forfait-price span{color:var(--or);}
+.forfait-price-sub{font-size:11.5px;color:var(--gris-mid);margin-top:2px;}
+.forfait-pay{padding:14px 22px 20px;display:flex;flex-direction:column;gap:8px;}
+.btn-pay{width:100%;padding:11px 14px;border-radius:var(--radius-sm);border:2px solid;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-main);font-size:13.5px;font-weight:700;cursor:pointer;transition:all var(--transition);}
+.btn-pay-om{background:var(--blanc);border-color:#FF6B00;color:#FF6B00;}
+.btn-pay-om:hover{background:#FF6B00;color:var(--blanc);}
+.btn-pay-wv{background:var(--blanc);border-color:#00A9E0;color:#00A9E0;}
+.btn-pay-wv:hover{background:#00A9E0;color:var(--blanc);}
+.credits-faq{max-width:680px;margin:0 auto;padding:0 24px 64px;}
+.credits-faq h3{font-family:var(--font-serif);font-size:1.5rem;color:var(--noir);text-align:center;margin-bottom:24px;}
+.faq-item{background:var(--blanc);border-radius:var(--radius);border:1.5px solid var(--gris-clair);margin-bottom:8px;overflow:hidden;}
+.faq-q{width:100%;background:none;border:none;padding:16px 20px;text-align:left;font-family:var(--font-main);font-size:14px;font-weight:700;color:var(--noir);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:background var(--transition);}
+.faq-q:hover{background:var(--or-pale);}
+.faq-q .arr{color:var(--or);transition:transform var(--transition);}
+.faq-q.open .arr{transform:rotate(180deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.3s ease,padding 0.3s ease;font-size:13.5px;color:var(--gris-fonce);line-height:1.7;padding:0 20px;}
+.faq-a.open{max-height:200px;padding:0 20px 16px;}
+
+/* ═══ ALERTE CREDITS ═══ */
+.credit-alert{background:var(--rouge-pale);border:1.5px solid #e8b4b0;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--rouge);font-weight:600;margin-bottom:14px;display:none;}
+.credit-alert.show{display:block;}
+
+/* ═══ FAVORIS ═══ */
+.btn-favori{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.92);border:1.5px solid var(--gris-clair);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition);box-shadow:0 2px 8px rgba(0,0,0,0.10);}
+.btn-favori:hover{background:var(--or-pale);border-color:var(--or-border);transform:scale(1.12);}
+.btn-favori.actif{background:var(--or-pale);border-color:var(--or-border);}
+.card-img-wrap{position:relative;}
+
+/* Section favoris dans mes annonces */
+.mes-annonces-block.favoris-block{border-top:2px dashed var(--gris-clair);padding-top:20px;}
+
+/* ═══ STATS VUES ═══ */
+.stats-vues-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--gris-mid);background:var(--fond);border:1px solid var(--gris-clair);border-radius:20px;padding:3px 10px;margin-top:4px;}
+.stats-vues-badge svg{width:13px;height:13px;opacity:0.6;}
+
+/* Dashboard stats */
+.dashboard-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--blanc);border-radius:var(--radius);border:1.5px solid var(--gris-clair);padding:18px 20px;text-align:center;}
+.stat-card .sval{font-size:2rem;font-weight:900;color:var(--or);display:block;line-height:1;}
+.stat-card .slabel{font-size:12px;color:var(--gris-mid);margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.stat-card.vert .sval{color:var(--vert);}
+.stat-card.bleu .sval{color:#2980b9;}
+
+/* Tableau vues par annonce */
+.vues-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px;}
+.vues-table th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gris-mid);font-weight:700;border-bottom:2px solid var(--gris-clair);background:var(--fond);}
+.vues-table td{padding:10px 12px;border-bottom:1px solid var(--gris-clair);color:var(--gris-fonce);vertical-align:middle;}
+.vues-table tr:last-child td{border-bottom:none;}
+.vues-table tr:hover td{background:var(--or-pale);}
+.vue-bar{display:inline-block;height:8px;background:var(--or);border-radius:4px;min-width:4px;transition:width 0.5s ease;}
+
+/* ═══ SIGNALEMENT ═══ */
+.btn-signaler{padding:6px 12px;font-size:12px;color:var(--gris-mid);background:transparent;border:1px solid var(--gris-clair);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-main);transition:all var(--transition);}
+.btn-signaler:hover{color:var(--rouge);border-color:#e8b4b0;background:var(--rouge-pale);}
+.signal-card{max-width:400px;}
+.signal-options{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.signal-opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--gris-clair);border-radius:var(--radius-sm);cursor:pointer;font-size:14px;color:var(--gris-fonce);font-family:var(--font-main);background:var(--fond);transition:all var(--transition);text-align:left;}
+.signal-opt:hover{border-color:var(--rouge);background:var(--rouge-pale);color:var(--rouge);}
+.signal-opt input[type="radio"]{accent-color:var(--rouge);}
+.signal-success{text-align:center;padding:20px 0;}
+.signal-success .sicon{font-size:44px;margin-bottom:12px;}
+.signal-success p{color:var(--gris);font-size:14px;line-height:1.7;}
+
+/* ═══ FOOTER ═══ */
+.site-footer{background:var(--gris-fonce);color:var(--gris-clair);padding:36px 24px;}
+.site-footer-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:30px;flex-wrap:wrap;}
+.site-footer h3{font-family:var(--font-serif);color:var(--or-light);font-size:1.3rem;margin-bottom:6px;}
+.site-footer p{font-size:13.5px;color:var(--gris-mid);max-width:320px;line-height:1.6;}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap;}
+.footer-links a{font-size:14px;color:var(--gris-mid);text-decoration:none;transition:color var(--transition);cursor:pointer;}
+.footer-links a:hover{color:var(--or-light);}
+
+/* ═══ SKELETON LOADER ═══ */
+.skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.skeleton-card{background:var(--blanc);border-radius:var(--radius);border:1.5px solid var(--gris-clair);overflow:hidden;}
+.skeleton-img{height:190px;background:linear-gradient(90deg,#f0ece4 25%,#e8e0d0 50%,#f0ece4 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;}
+.skeleton-body{padding:18px;}
+.skeleton-line{height:14px;border-radius:4px;background:linear-gradient(90deg,#f0ece4 25%,#e8e0d0 50%,#f0ece4 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;margin-bottom:10px;}
+.skeleton-line.short{width:60%;}
+.skeleton-line.xshort{width:40%;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){.forfaits-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:768px){
+  .header{height:auto;padding:12px 16px;flex-wrap:wrap;gap:12px;}
+  .header-search{order:3;flex:0 0 100%;max-width:100%;}
+  .choice-panel{padding:36px 16px 32px;}
+  .liste-section{padding:28px 16px 48px;}
+  .annonce-form,.fruits-card{padding:24px 20px;}
+  #liste-terrains,#liste-fruits,#mes-annonces-terrains,#mes-annonces-fruits{grid-template-columns:1fr;}
+  .credits-how{grid-template-columns:1fr;}
+  .forfaits-grid{grid-template-columns:1fr;}
+  .filtres-inner{gap:8px;}
+}
+@media(max-width:480px){
+  .choice-actions{flex-direction:column;align-items:stretch;}
+  .choice-btn{justify-content:center;}
+  .detail-action-group{flex-direction:column;}
+  .detail-action-group .btn-principal,.btn-whatsapp{width:100%;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header-logo" onclick="afficherSection('terrains')" role="button" tabindex="0" aria-label="Accueil SunuSouf">
+    <img src="logo_sunusouf.jpeg" alt="SunuSouf" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-family:var(--font-serif);font-size:1.4rem;font-weight:700;color:var(--or)\'>SunuSouf</span>'">
+  </a>
+  <div class="header-search">
+    <input type="text" id="search-input" placeholder="Terrain, fruit, région…" aria-label="Rechercher une annonce">
+    <select id="search-region" aria-label="Filtrer par région">
+      <option value="">Toutes les régions</option>
+      <option value="dakar">Dakar</option><option value="thies">Thiès</option>
+      <option value="saint-louis">Saint-Louis</option><option value="kaolack">Kaolack</option>
+      <option value="ziguinchor">Ziguinchor</option><option value="fatick">Fatick</option>
+      <option value="kolda">Kolda</option><option value="louga">Louga</option>
+      <option value="matam">Matam</option><option value="tambacounda">Tambacounda</option>
+      <option value="kedougou">Kédougou</option><option value="diourbel">Diourbel</option>
+      <option value="kaffrine">Kaffrine</option><option value="sedhiou">Sédhiou</option>
+    </select>
+    <button class="btn-recherche" id="btn-recherche" aria-label="Lancer la recherche">Rechercher</button>
+  </div>
+  <div class="header-actions">
+    <button class="btn-secondaire" onclick="allerVersSection('credits')" style="white-space:nowrap;">🪙 Tarifs</button>
+    <div id="zone-non-connecte" style="display:flex;align-items:center;">
+      <button class="btn-principal" onclick="openLoginModal()">Se connecter</button>
+    </div>
+    <div id="zone-connecte" style="display:none;align-items:center;gap:10px;">
+      <button class="credits-badge" onclick="event.stopPropagation();allerVersSection('credits')" aria-label="Mes crédits">
+         <span class="cnum" id="header-credit-count">…</span> crédit(s)
+      </button>
+      <button type="button" id="ouvrir-annonce" class="btn-principal">+ Terrain</button>
+      <button type="button" id="ouvrir-fruits" class="btn-principal" style="background:var(--vert);">+ Fruits</button>
+      <div class="user-menu-wrapper">
+        <button type="button" id="user-menu-btn" class="btn-user-avatar" aria-label="Mon compte" aria-expanded="false">
+          <span id="user-avatar-initiale">?</span>
+        </button>
+        <div id="user-dropdown" class="user-dropdown" style="display:none;" role="menu">
+          <div class="user-dropdown-header">
+            <span class="uname" id="user-dropdown-name">Utilisateur</span>
+            <span class="usub" id="user-dropdown-contact"></span>
+          </div>
+          <div class="dd-credits">
+            <div>
+              <div class="dlabel">Mes crédits</div>
+              <div class="dval"><span id="dropdown-credit-count">…</span></div>
+            </div>
+            <button class="dacheter" onclick="closeUserDropdown();allerVersSection('credits')">+ Acheter</button>
+          </div>
+          <ul class="user-dropdown-list" role="none">
+            <li role="none"><button role="menuitem" onclick="allerVersSection('mes-annonces')">📋 Mes annonces</button></li>
+            <li role="none"><button role="menuitem" onclick="closeUserDropdown();allerVersSection('credits')">🪙 Acheter des crédits</button></li>
+            <li class="dd-sep" role="separator"></li>
+            <li role="none"><button role="menuitem" onclick="closeUserDropdown();tryOpenTerrain()">+ Publier un terrain</button></li>
+            <li role="none"><button role="menuitem" onclick="closeUserDropdown();tryOpenFruits()">+ Vendre des fruits</button></li>
+            <li class="dd-sep" role="separator"></li>
+            <li role="none"><button id="btn-deconnexion" class="deconnexion" role="menuitem">Déconnexion</button></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- FILTRES BAR TERRAINS -->
+<div class="filtres-bar" id="filtres-terrains" aria-label="Filtres terrains">
+  <div class="filtres-inner">
+    <select class="filtre-select" id="f-type-sol" aria-label="Type de sol"><option value="">Type de sol</option><option value="sableux">Sableux</option><option value="argileux">Argileux</option><option value="limoneux">Limoneux</option><option value="loameux">Loameux</option><option value="mixte">Mixte</option></select>
+    <select class="filtre-select" id="f-type-annonce" aria-label="Type d'annonce"><option value="">Type d'annonce</option><option value="Terrain agricole">Agricole</option><option value="Terrain résidentiel">Résidentiel</option><option value="Terrain commercial">Commercial</option></select>
+    <select class="filtre-select" id="f-eau" aria-label="Eau courante"><option value="">Eau courante</option><option value="oui">Avec eau</option><option value="non">Sans eau</option></select>
+    <select class="filtre-select" id="f-elec" aria-label="Électricité"><option value="">Électricité</option><option value="oui">Avec électricité</option><option value="non">Sans électricité</option></select>
+    <select class="filtre-select" id="f-prix-max" aria-label="Budget maximum"><option value="">Budget max</option><option value="5000000">5 M FCFA</option><option value="15000000">15 M FCFA</option><option value="50000000">50 M FCFA</option><option value="100000000">100 M FCFA</option></select>
+    <button class="filtre-reset" id="filtre-reset-terrains">✕ Réinitialiser</button>
+    <span class="filtre-count" id="filtre-count-terrains"></span>
+  </div>
+</div>
+
+<!-- FILTRES BAR FRUITS -->
+<div class="filtres-bar" id="filtres-fruits" aria-label="Filtres fruits">
+  <div class="filtres-inner">
+    <select class="filtre-select" id="f-fruit-nom" aria-label="Type de fruit"><option value="">Tous les fruits</option></select>
+    <select class="filtre-select" id="f-prix-kg-max" aria-label="Prix max/kg"><option value="">Prix max/kg</option><option value="500">500 FCFA</option><option value="1000">1 000 FCFA</option><option value="2000">2 000 FCFA</option><option value="5000">5 000 FCFA</option></select>
+    <button class="filtre-reset" id="filtre-reset-fruits">✕ Réinitialiser</button>
+    <span class="filtre-count" id="filtre-count-fruits"></span>
+  </div>
+</div>
+
+<section class="choice-panel">
+  <div class="choice-eyebrow">Plateforme sénégalaise</div>
+  <h1>Trouvez votre <em>terrain</em><br>ou vos fruits locaux</h1>
+  <p>Des annonces de qualité pour acheter, vendre et se connecter avec les producteurs au Sénégal.</p>
+  <div class="choice-actions">
+    <button type="button" id="voir-terrains" class="choice-btn choice-btn-terrain">🌍 Voir les terrains</button>
+    <button type="button" id="voir-fruits-view" class="choice-btn choice-btn-fruit">🍋 Voir les fruits</button>
+  </div>
+</section>
+
+<section id="section-liste-terrains" class="liste-section" style="display:block;">
+  <div class="liste-container">
+    <div class="section-heading"><h2>Terrains disponibles</h2></div>
+    <div id="liste-terrains" role="list" aria-label="Liste des terrains"></div>
+    <div class="pagination" id="pagination-terrains"></div>
+  </div>
+</section>
+
+<section id="section-liste-fruits" class="liste-section" style="display:none;">
+  <div class="liste-container">
+    <div class="section-heading"><h2>Fruits à vendre</h2></div>
+    <div id="liste-fruits" role="list" aria-label="Liste des fruits"></div>
+    <div class="pagination" id="pagination-fruits"></div>
+  </div>
+</section>
+
+<section id="section-mes-annonces" class="liste-section" style="display:none;">
+  <div class="liste-container">
+    <div class="section-heading"><h2>Mon espace annonceur</h2></div>
+    <!-- STATS DASHBOARD -->
+    <div class="dashboard-stats" id="dashboard-stats" style="display:none;">
+      <div class="stat-card"><span class="sval" id="stat-total">0</span><div class="slabel">Annonces publiées</div></div>
+      <div class="stat-card bleu"><span class="sval" id="stat-vues">0</span><div class="slabel">Vues totales</div></div>
+      <div class="stat-card vert"><span class="sval" id="stat-favoris">0</span><div class="slabel">Mes favoris enregistrés</div></div>
+    </div>
+    <div class="mes-annonces-panel">
+      <!-- VUES PAR ANNONCE -->
+      <div class="mes-annonces-block" id="block-vues-detail" style="display:none;">
+        <h3> Statistiques de vues</h3>
+        <div id="vues-detail-content"></div>
+      </div>
+      <div class="mes-annonces-block">
+        <h3>Terrains publiés</h3>
+        <div id="mes-annonces-terrains"></div>
+      </div>
+      <div class="mes-annonces-block">
+        <h3>Fruits publiés</h3>
+        <div id="mes-annonces-fruits"></div>
+      </div>
+      <!-- FAVORIS -->
+      <div class="mes-annonces-block favoris-block">
+        <h3>❤️ Mes favoris</h3>
+        <div id="mes-favoris-liste"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION CREDITS -->
+<section id="section-credits">
+  <div class="credits-hero">
+    <div class="eyebrow">Monétisation</div>
+    <h2>Achetez des <em>crédits</em><br>pour publier vos annonces</h2>
+    <p>Chaque publication consomme 1 crédit. Valables 6 mois. Plus vous achetez, plus vous économisez.</p>
+    <div class="credit-pill">
+      Vous avez actuellement : <em><span id="credits-hero-count">…</span> crédit(s)</em>
+    </div>
+  </div>
+  <div class="credits-how">
+    <div class="how-card"><div class="how-icon">🛒</div><div class="how-title">Achetez un forfait</div><div class="how-desc">Choisissez le nombre de crédits dont vous avez besoin. Payez via Orange Money ou Wave.</div></div>
+    <div class="how-card"><div class="how-icon">📋</div><div class="how-title">Publiez vos annonces</div><div class="how-desc">Chaque annonce terrain ou fruit consomme 1 crédit. Les bonus sont offerts gratuitement.</div></div>
+    <div class="how-card"><div class="how-icon">📞</div><div class="how-title">Recevez des contacts</div><div class="how-desc">Les acheteurs vous contactent directement. Pas de commission sur la vente.</div></div>
+  </div>
+  <div class="forfaits-wrapper">
+    <div class="forfaits-title">Choisissez votre forfait</div>
+    <div class="forfaits-grid">
+      <div class="forfait-card">
+        <div class="forfait-hd"><div class="forfait-num">Forfait 1</div><div class="forfait-name">Starter</div><div class="forfait-save zero">Prix de base</div></div>
+        <ul class="forfait-features"><li>6 crédits</li><li>Gestionnaire de compte</li><li>Visibilité hebdomadaire</li><li>Valable 6 mois, non remboursable</li></ul>
+        <div class="forfait-price-blk"><div class="forfait-price">12 000 F CFA <span>/ 6 crédits</span></div><div class="forfait-price-sub">≈ 2 000 F CFA / crédit</div></div>
+        <div class="forfait-pay"><button class="btn-pay btn-pay-om" onclick="openPayModal('Forfait 1 — Starter','12 000 F CFA',6)">↗↙ Orange Money</button><button class="btn-pay btn-pay-wv" onclick="openPayModal('Forfait 1 — Starter','12 000 F CFA',6)">🐧 Wave</button></div>
+      </div>
+      <div class="forfait-card pop">
+        <div class="badge-pop">⭐ Populaire</div>
+        <div class="forfait-hd"><div class="forfait-num">Forfait 2</div><div class="forfait-name">Pro</div><div class="forfait-save">Économisez 13%</div></div>
+        <ul class="forfait-features"><li class="bonus">23 crédits</li><li class="bonus">3 bonus offerts (7 jours)</li><li>Gestionnaire de compte</li><li>Visibilité hebdomadaire</li><li>Valable 6 mois, non remboursable</li></ul>
+        <div class="forfait-price-blk"><div class="forfait-price">38 000 F CFA <span>/ 23 crédits</span></div><div class="forfait-price-sub">≈ 1 652 F CFA / crédit</div></div>
+        <div class="forfait-pay"><button class="btn-pay btn-pay-om" onclick="openPayModal('Forfait 2 — Pro','38 000 F CFA',23)">↗↙ Orange Money</button><button class="btn-pay btn-pay-wv" onclick="openPayModal('Forfait 2 — Pro','38 000 F CFA',23)">🐧 Wave</button></div>
+      </div>
+      <div class="forfait-card">
+        <div class="forfait-hd"><div class="forfait-num">Forfait 3</div><div class="forfait-name">Business</div><div class="forfait-save">Économisez 8%</div></div>
+        <ul class="forfait-features"><li class="bonus">65 crédits</li><li class="bonus">5 bonus offerts (7 jours)</li><li>Gestionnaire de compte</li><li>Visibilité hebdomadaire</li><li>Valable 6 mois, non remboursable</li></ul>
+        <div class="forfait-price-blk"><div class="forfait-price">90 000 F CFA <span>/ 65 crédits</span></div><div class="forfait-price-sub">≈ 1 385 F CFA / crédit</div></div>
+        <div class="forfait-pay"><button class="btn-pay btn-pay-om" onclick="openPayModal('Forfait 3 — Business','90 000 F CFA',65)">↗↙ Orange Money</button><button class="btn-pay btn-pay-wv" onclick="openPayModal('Forfait 3 — Business','90 000 F CFA',65)">🐧 Wave</button></div>
+      </div>
+      <div class="forfait-card">
+        <div class="forfait-hd"><div class="forfait-num">Forfait 4</div><div class="forfait-name">Premium</div><div class="forfait-save">Économisez 6%</div></div>
+        <ul class="forfait-features"><li class="bonus">175 crédits</li><li class="bonus">10 bonus offerts (7 jours)</li><li>Gestionnaire de compte</li><li>Visibilité hebdomadaire</li><li>Valable 6 mois, non remboursable</li></ul>
+        <div class="forfait-price-blk"><div class="forfait-price">185 000 F CFA <span>/ 175 crédits</span></div><div class="forfait-price-sub">≈ 1 057 F CFA / crédit</div></div>
+        <div class="forfait-pay"><button class="btn-pay btn-pay-om" onclick="openPayModal('Forfait 4 — Premium','185 000 F CFA',175)">↗↙ Orange Money</button><button class="btn-pay btn-pay-wv" onclick="openPayModal('Forfait 4 — Premium','185 000 F CFA',175)">🐧 Wave</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="credits-faq">
+    <h3>Questions fréquentes</h3>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Comment fonctionne un crédit ? <span class="arr">▾</span></button><div class="faq-a">Chaque crédit vous permet de publier 1 annonce (terrain ou fruit). Les crédits bonus expirent après 7 jours. Les crédits normaux sont valables 6 mois.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Comment payer avec Orange Money ou Wave ? <span class="arr">▾</span></button><div class="faq-a">Cliquez sur le bouton du forfait choisi. Vous serez redirigé vers WhatsApp pour effectuer le paiement. Vos crédits seront activés sous 30 minutes.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Les crédits sont-ils remboursables ? <span class="arr">▾</span></button><div class="faq-a">Non. Les crédits sont valables 6 mois et ne sont pas remboursables une fois achetés.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Mes crédits fonctionnent pour terrains ET fruits ? <span class="arr">▾</span></button><div class="faq-a">Oui, vos crédits sont utilisables pour les deux types d'annonces. 1 crédit = 1 publication, quel que soit le type.</div></div>
+  </div>
+</section>
+
+<section id="detail-page" class="liste-section" style="display:none;">
+  <div class="liste-container detail-page-container">
+    <button type="button" class="btn-secondaire" id="back-to-list">← Retour</button>
+    <div id="detail-page-content"></div>
+  </div>
+</section>
+
+<!-- MODALES -->
+<section id="login-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title">
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="close-login" aria-label="Fermer">×</button>
+    <h2 id="login-title">Se connecter</h2>
+    <p class="modal-description">Connectez-vous pour publier vos annonces.</p>
+    <p class="annonce-note" style="margin-bottom:18px;">Premier crédit offert à l'inscription — votre première annonce est gratuite.</p>
+    <div class="social-login">
+      <button type="button" id="google-login" class="btn-google">🔵 Se connecter avec Google</button>
+      <div class="form-error" id="login-form-error" role="alert"></div>
+    </div>
+  </div>
+</section>
+
+<div id="gate-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-card gate-card">
+    <button class="modal-close" onclick="closeGateModal()" aria-label="Fermer">×</button>
+    <div class="gate-icon">🪙</div>
+    <h2>Crédits insuffisants</h2>
+    <p>Vous n'avez pas assez de crédits pour publier une annonce.<br>Achetez un forfait pour commencer à publier.</p>
+    <div class="gate-btns">
+      <button class="btn-principal" onclick="closeGateModal();allerVersSection('credits')">Voir les forfaits →</button>
+      <button class="btn-secondaire" onclick="closeGateModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div id="pay-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-card pay-card">
+    <button class="modal-close" onclick="closePayModal()" aria-label="Fermer">×</button>
+    <h2>Finaliser le paiement</h2>
+    <p class="modal-description">Choisissez votre mode de paiement préféré</p>
+    <div class="forfait-recap">
+      <div class="rname" id="modal-forfait-name">—</div>
+      <div class="rprice" id="modal-forfait-price">—</div>
+    </div>
+    <div class="pay-label">Payer avec</div>
+    <div class="pay-btns">
+      <button class="pay-btn pay-orange" onclick="payer('orange')"> Orange Money</button>
+      <button class="pay-btn pay-wave" onclick="payer('wave')">Wave</button>
+    </div>
+    <div class="pay-note">Après paiement, envoyez votre reçu sur WhatsApp au<br><strong id="wa-display-number">+221 XX XXX XX XX</strong> — activation sous 30 min.</div>
+  </div>
+</div>
+
+<!-- FORMULAIRES -->
+<section id="poster-annonce" class="poster-annonce" aria-label="Formulaire terrain">
+  <div class="annonce-form">
+    <h2>Publier un terrain</h2>
+    <p class="annonce-note">⚠️ Cette publication consommera <strong>1 crédit</strong>. Solde actuel : <strong id="credits-form-terrain">…</strong> crédit(s).</p>
+    <div class="credit-alert" id="credit-alert-terrain" role="alert">❌ Solde insuffisant. Veuillez acheter des crédits.</div>
+    <form id="form-terrain" novalidate>
+      <div class="annonce-input-group"><label for="titre">Titre de l'annonce *</label><input type="text" id="titre" placeholder="Ex : Terrain agricole à Thiès" required maxlength="100"></div>
+      <div class="annonce-input-group"><label for="region">Région *</label><select id="region" required><option value="">Choisir une région</option><option value="dakar">Dakar</option><option value="thies">Thiès</option><option value="saint-louis">Saint-Louis</option><option value="kaolack">Kaolack</option><option value="ziguinchor">Ziguinchor</option><option value="fatick">Fatick</option><option value="kolda">Kolda</option><option value="louga">Louga</option><option value="matam">Matam</option><option value="tambacounda">Tambacounda</option><option value="kedougou">Kédougou</option><option value="diourbel">Diourbel</option><option value="kaffrine">Kaffrine</option><option value="sedhiou">Sédhiou</option></select></div>
+      <div class="annonce-input-group"><label for="adresse">Adresse *</label><input type="text" id="adresse" placeholder="Ex : Route de Rufisque, Dakar" required></div>
+      <div class="annonce-input-group"><label for="type-annonce">Type *</label><select id="type-annonce" required><option value="Terrain agricole">Terrain agricole</option><option value="Terrain résidentiel">Terrain résidentiel</option><option value="Terrain commercial">Terrain commercial</option></select></div>
+      <div class="annonce-input-group annonce-checkbox-group"><label><input type="checkbox" id="eau-courante"> Accès Eau Courante</label></div>
+      <div class="annonce-input-group annonce-checkbox-group"><label><input type="checkbox" id="electricite"> Accès Électricité</label></div>
+      <div class="annonce-input-group"><label for="surface">Surface (m²) *</label><input type="number" id="surface" placeholder="Ex : 500" min="1" required></div>
+      <div class="annonce-input-group"><label for="ph">pH du sol *</label><input type="number" step="0.1" min="0" max="14" id="ph" placeholder="Ex : 6.5" required></div>
+      <div class="annonce-input-group"><label for="type-sol">Type de sol *</label><select id="type-sol" required><option value="">Choisir</option><option value="sableux">Sableux</option><option value="argileux">Argileux</option><option value="limoneux">Limoneux</option><option value="loameux">Loameux</option><option value="mixte">Mixte</option></select></div>
+      <div class="annonce-input-group"><label for="salinite">Salinité / conductivité (mS/cm) *</label><input type="number" step="0.1" min="0" id="salinite" placeholder="Ex : 0.8" required></div>
+      <div class="annonce-input-group"><label for="matiere-organique">Matière organique (%) *</label><input type="number" step="0.1" min="0" id="matiere-organique" placeholder="Ex : 3.2" required></div>
+      <div class="annonce-input-group"><label for="prix">Prix (FCFA) *</label><input type="text" id="prix" placeholder="Ex : 5000000" required></div>
+      <div class="annonce-input-group"><label for="description">Description *</label><textarea id="description" rows="4" placeholder="Décrivez le terrain…" required></textarea></div>
+      <div class="annonce-input-group"><label for="contact">Contact (téléphone ou email) *</label><input type="text" id="contact" placeholder="77 XXX XX XX ou email@..." required><span class="file-size-warn" id="warn-contact-terrain">⚠️ Veuillez saisir un numéro de téléphone valide (8-9 chiffres) ou un email valide.</span></div>
+      <div class="annonce-input-group">
+        <label for="photos-terrain">Photos du terrain (max 5 Mo / photo)</label>
+        <input type="file" id="photos-terrain" accept="image/*" multiple>
+        <span class="file-size-warn" id="warn-terrain">⚠️ Certains fichiers dépassent 5 Mo et seront ignorés.</span>
+      </div>
+      <div id="preview-terrain" style="display:none;margin-bottom:14px;"><div id="preview-terrain-list" class="preview-gallery"></div></div>
+      <div id="terrain-message" class="form-feedback" style="display:none;" role="alert"></div>
+      <button type="submit" class="btn-principal" id="btn-submit-terrain" style="width:100%;padding:14px;font-size:15px;">Publier l'annonce (1 crédit)</button>
+    </form>
+  </div>
+</section>
+
+<section id="vente-fruits" class="fruits-section" aria-label="Formulaire fruits">
+  <div class="fruits-card">
+    <h2>Vendre des fruits</h2>
+    <p class="annonce-note">⚠️ Cette publication consommera <strong>1 crédit</strong>. Solde actuel : <strong id="credits-form-fruit">…</strong> crédit(s).</p>
+    <div class="credit-alert" id="credit-alert-fruit" role="alert">❌ Solde insuffisant. Veuillez acheter des crédits.</div>
+    <form id="form-fruit" novalidate>
+      <div class="annonce-input-group"><label for="fruit-nom">Fruit *</label><input type="text" id="fruit-nom" placeholder="Ex : Mangue, Banane, Pastèque" required maxlength="80"></div>
+      <div class="annonce-input-group"><label for="fruit-region">Région *</label><select id="fruit-region" required><option value="">Choisir une région</option><option value="dakar">Dakar</option><option value="thies">Thiès</option><option value="saint-louis">Saint-Louis</option><option value="kaolack">Kaolack</option><option value="ziguinchor">Ziguinchor</option><option value="fatick">Fatick</option><option value="kolda">Kolda</option><option value="louga">Louga</option><option value="matam">Matam</option><option value="tambacounda">Tambacounda</option><option value="kedougou">Kédougou</option><option value="diourbel">Diourbel</option><option value="kaffrine">Kaffrine</option><option value="sedhiou">Sédhiou</option></select></div>
+      <div class="annonce-input-group"><label for="prix-kg">Prix par kilo (FCFA) *</label><input type="number" id="prix-kg" placeholder="Ex : 500" min="0" required></div>
+      <div class="annonce-input-group"><label for="quantite-kg">Quantité disponible (kg) *</label><input type="number" id="quantite-kg" placeholder="Ex : 100" min="1" required></div>
+      <div class="annonce-input-group"><label for="description-fruits">Description *</label><textarea id="description-fruits" rows="4" placeholder="Mangues mûres, récolte locale…" required></textarea></div>
+      <div class="annonce-input-group"><label for="contact-fruits">Contact (téléphone ou email) *</label><input type="text" id="contact-fruits" placeholder="77 XXX XX XX ou email@..." required><span class="file-size-warn" id="warn-contact-fruit">⚠️ Veuillez saisir un numéro de téléphone valide (8-9 chiffres) ou un email valide.</span></div>
+      <div class="annonce-input-group">
+        <label for="photos-fruits">Photos des fruits (max 5 Mo / photo)</label>
+        <input type="file" id="photos-fruits" accept="image/*" multiple>
+        <span class="file-size-warn" id="warn-fruit">⚠️ Certains fichiers dépassent 5 Mo et seront ignorés.</span>
+      </div>
+      <div id="preview-fruit" style="display:none;margin-bottom:14px;"><div id="preview-fruit-list" class="preview-gallery"></div></div>
+      <div id="fruit-message" class="form-feedback" style="display:none;" role="alert"></div>
+      <button type="submit" class="btn-principal" id="btn-submit-fruit" style="width:100%;padding:14px;font-size:15px;background:var(--vert);">Publier la vente de fruits (1 crédit)</button>
+    </form>
+  </div>
+</section>
+
+<!-- MODAL SIGNALEMENT -->
+<div id="signal-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-card signal-card">
+    <button class="modal-close" onclick="closeSignalModal()" aria-label="Fermer">×</button>
+    <div id="signal-form-content">
+      <h2>Signaler cette annonce</h2>
+      <p class="modal-description">Pourquoi signalez-vous cette annonce ?</p>
+      <div class="signal-options" id="signal-options">
+        <label class="signal-opt"><input type="radio" name="signal-raison" value="Prix suspect"> Prix ou informations suspectes</label>
+        <label class="signal-opt"><input type="radio" name="signal-raison" value="Fausse annonce"> Annonce frauduleuse ou fausse</label>
+        <label class="signal-opt"><input type="radio" name="signal-raison" value="Contenu inapproprié"> Contenu inapproprié</label>
+        <label class="signal-opt"><input type="radio" name="signal-raison" value="Doublon"> Annonce en double</label>
+        <label class="signal-opt"><input type="radio" name="signal-raison" value="Autre"> Autre raison</label>
+      </div>
+      <button class="btn-principal" style="width:100%" onclick="envoyerSignalement()">Envoyer le signalement</button>
+      <div class="form-error" id="signal-error" role="alert"></div>
+    </div>
+    <div id="signal-success-content" class="signal-success" style="display:none;">
+      <div class="sicon">✅</div>
+      <h2>Merci !</h2>
+      <p>Votre signalement a été enregistré. Notre équipe l'examinera sous 24h.</p>
+      <button class="btn-secondaire" style="margin-top:16px;width:100%" onclick="closeSignalModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<button type="button" id="btn-seconnecter-flottant" class="btn-seconnecter-flottant" style="display:none;" aria-label="Se connecter">Se connecter</button>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div>
+      <h3>SunuSouf</h3>
+      <p>Plateforme de mise en relation pour vendre des terrains et des fruits au Sénégal.</p>
+    </div>
+    <div class="footer-links">
+      <a onclick="afficherSection('terrains')">Terrains</a>
+      <a onclick="afficherSection('fruits')">Fruits</a>
+      <a onclick="allerVersSection('mes-annonces')">Mes annonces</a>
+      <a onclick="allerVersSection('credits')"> Acheter des crédits</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════ SCRIPT ═══ -->
+<script>
+'use strict';
+
+/* ══ CONFIG ══════════════════════════════════════════════════════════ */
+const SUPABASE_URL  = 'https://gupcgsblynwigsvedunk.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_LLRBYlYUbLGUOekbQBYluA_RLy53KpY';
+const SITE_URL = 'https://heroic-snickerdoodle-517e48.netlify.app';
+const WA_NUMBER     = '221774847103'; // ← REMPLACER par votre numéro réel
+const PAGE_SIZE     = 12; // annonces par page
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 Mo
+
+/* ══ INIT SUPABASE ════════════════════════════════════════════════════ */
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* Afficher le numéro WhatsApp dans le modal paiement */
+document.getElementById('wa-display-number').textContent =
+  WA_NUMBER !== '221XXXXXXXXX'
+    ? '+' + WA_NUMBER.replace(/(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5')
+    : ' Numéro à configurer';
+
+/* ══ ÉTAT GLOBAL ══════════════════════════════════════════════════════ */
+let terrainsData      = [];
+let fruitsData        = [];
+let filteredTerrains  = [];
+let filteredFruits    = [];
+let pageTerrains      = 1;
+let pageFruits        = 1;
+let previousSection   = null;
+let leafletLoaded     = false;
+let currentSection    = 'terrains';
+
+/* ══ CRÉDITS (sécurisés côté serveur via Supabase RPC + RLS) ═════════
+   Les crédits ne sont JAMAIS stockés ni modifiés en localStorage.
+   Ils vivent dans la table `credits` (1 ligne par utilisateur, clé = auth.uid()).
+   Seules les fonctions RPC security-definer get_my_credits() et
+   consume_credit() peuvent les lire/modifier — impossible à falsifier
+   depuis la console du navigateur. Voir sunusouf_securite.sql. */
+let cachedCredits = 0;
+
+async function fetchCredits() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { cachedCredits = 0; return 0; }
+  const { data, error } = await db.rpc('get_my_credits');
+  if (error) { console.warn('Erreur lecture crédits:', error.message); return cachedCredits; }
+  cachedCredits = data ?? 0;
+  return cachedCredits;
+}
+
+async function consumeCreditServer() {
+  const { data, error } = await db.rpc('consume_credit');
+  if (error) { console.warn('Erreur consommation crédit:', error.message); return false; }
+  if (data) cachedCredits = Math.max(0, cachedCredits - 1);
+  return !!data;
+}
+
+async function updateCreditsUI() {
+  const c = await fetchCredits();
+  ['header-credit-count','dropdown-credit-count','credits-hero-count',
+   'credits-form-terrain','credits-form-fruit'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = c;
+  });
+  /* alerte formulaires */
+  const insuffisant = c <= 0;
+  const aT = document.getElementById('credit-alert-terrain');
+  const aF = document.getElementById('credit-alert-fruit');
+  if (aT) aT.classList.toggle('show', insuffisant);
+  if (aF) aF.classList.toggle('show', insuffisant);
+  return c;
+}
+
+/* ══ UTILITAIRES ══════════════════════════════════════════════════════ */
+function escapeHtml(t) {
+  return String(t ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function formatDescription(d) {
+  if (!d) return '';
+  return escapeHtml(d).replace(/\r?\n/g, '<br>');
+}
+function parsePhotoUrls(f) {
+  if (!f) return [];
+  if (Array.isArray(f)) return f.filter(Boolean);
+  if (typeof f !== 'string') return [];
+  try { const p = JSON.parse(f); if (Array.isArray(p)) return p.filter(Boolean); } catch (_) {}
+  return [f];
+}
+function sanitizeFileName(n) {
+  return n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
+}
+function isEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+function isPhone(s) { return /^[\d\s\+\-\(\)]{6,20}$/.test(s); }
+function isContactValide(s) {
+  const v = String(s||'').trim();
+  if (!v) return false;
+  if (isEmail(v)) return true;
+  const digits = v.replace(/\D/g,'');
+  return digits.length >= 8 && digits.length <= 13;
+}
+
+function getFruitLabel(i)    { return i.fruit_nom || i.fruit || 'Fruit'; }
+function getFruitPrice(i)    { return i.prix_kg ?? i.prix ?? i.prix_par_kg ?? null; }
+function getFruitQuantity(i) { return i.quantite_kg ?? i.quantite ?? null; }
+
+function getRegionCoords(region) {
+  const m = {
+    dakar:[14.6937,-17.4441], thies:[14.7872,-16.9385],
+    'saint-louis':[16.0157,-16.4897], kaolack:[14.1471,-16.0740],
+    ziguinchor:[12.5699,-16.2654], fatick:[14.3405,-16.4605],
+    kolda:[12.8852,-14.9479], louga:[15.6171,-16.2499],
+    matam:[15.6668,-13.2524], tambacounda:[13.7650,-13.6672],
+    kedougou:[12.5728,-12.1855], diourbel:[14.4727,-16.2331],
+    kaffrine:[13.8745,-15.6073], sedhiou:[12.6916,-15.5730]
+  };
+  return m[(region||'').toLowerCase()] || [14.4974,-14.4524];
+}
+
+function recommanderCultures(sol) {
+  const type = String(sol.type_sol || '').toLowerCase();
+  const ph   = Number(sol.ph);
+  const sal  = Number(sol.salinite);
+  const mo   = Number(sol.matiere_organique);
+  if (isNaN(ph)) return { erreur: 'pH non renseigné.' };
+  if (ph < 3.5 || ph > 9.5) return { erreur: 'pH aberrant pour un sol agricole.' };
+  const r = { cultures_recommandees:[], diagnostic_ph:'', alertes_et_conseils:[] };
+  if (ph < 4.5)       { r.diagnostic_ph='Ultra-acide'; r.cultures_recommandees=['Manioc','Anacardier','Bissap']; r.alertes_et_conseils.push('Chaulage obligatoire.'); }
+  else if (ph < 5.5)  { r.diagnostic_ph='Acide';       r.cultures_recommandees=['Pomme de terre','Arachide','Patate douce']; }
+  else if (ph <= 7.5) { r.diagnostic_ph='Idéal';       r.cultures_recommandees=['Tomate','Piment','Oignon','Salade','Gombo','Maïs']; }
+  else                { r.diagnostic_ph='Alcalin';      r.cultures_recommandees=['Chou','Betterave']; r.alertes_et_conseils.push('Risque de blocage du phosphore.'); }
+  if (!isNaN(sal) && sal > 2) { r.alertes_et_conseils.push('Salinité élevée (> 2 mS/cm).'); r.cultures_recommandees=['Palmier dattier','Betterave']; }
+  if (type === 'argileux') r.alertes_et_conseils.push("Sol argileux : risque d'asphyxie racinaire.");
+  else if (type === 'sableux') r.alertes_et_conseils.push("Sol sableux : irrigation fréquente nécessaire.");
+  if (!isNaN(mo) && mo < 2) r.alertes_et_conseils.push('Matière organique faible : apporter du compost.');
+  return r;
+}
+
+/* ══ LEAFLET LAZY LOAD ════════════════════════════════════════════════ */
+function loadLeaflet(cb) {
+  if (leafletLoaded) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/leaflet/dist/leaflet.js';
+  s.onload = () => { leafletLoaded = true; cb(); };
+  document.head.appendChild(s);
+}
+
+/* ══ UPLOAD PHOTOS ════════════════════════════════════════════════════ */
+async function uploadPhoto(file, folder) {
+  if (!file || file.size > MAX_FILE_SIZE) return null;
+  const fn = `${folder}/${Date.now()}_${sanitizeFileName(file.name)}`;
+  const { error } = await db.storage.from('Photos').upload(fn, file, { upsert: true });
+  if (error) { console.warn('Upload error:', error.message); return null; }
+  return db.storage.from('Photos').getPublicUrl(fn).data?.publicUrl || null;
+}
+
+/* ══ SKELETON LOADER ══════════════════════════════════════════════════ */
+function renderSkeleton(count = 6) {
+  return `<div class="skeleton-grid">${Array(count).fill(0).map(() =>
+    `<div class="skeleton-card">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line xshort"></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+/* ══ RENDERING CARDS ══════════════════════════════════════════════════ */
+function renderCardImg(url, alt) {
+  const urls = parsePhotoUrls(url);
+  if (urls[0]) return `<div class="card-img"><img src="${urls[0]}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.closest('.card-img').innerHTML='<div class=\\'card-img-placeholder\\'>Pas de photo</div>'"></div>`;
+  return `<div class="card-img-placeholder">Pas de photo</div>`;
+}
+function renderPhotoGallery(url, alt) {
+  const urls = parsePhotoUrls(url);
+  if (!urls.length) return '';
+  return `<div class="detail-gallery">${urls.map(u =>
+    `<div class="detail-gallery-item"><img src="${u}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.closest('.detail-gallery-item').style.display='none'"></div>`
+  ).join('')}</div>`;
+}
+
+function showFeedback(id, msg, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent   = msg;
+  el.style.color   = ok ? '#2e7d32' : '#c62828';
+  el.style.background = ok ? '#e8f5e9' : '#ffebee';
+}
+
+/* ══ RECHERCHE + FILTRES ══════════════════════════════════════════════ */
+function normalise(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function applyFiltersTerrains() {
+  const q        = normalise(document.getElementById('search-input').value);
+  const region   = document.getElementById('search-region').value;
+  const typeSol  = document.getElementById('f-type-sol').value;
+  const typeA    = document.getElementById('f-type-annonce').value;
+  const eau      = document.getElementById('f-eau').value;
+  const elec     = document.getElementById('f-elec').value;
+  const prixMax  = parseInt(document.getElementById('f-prix-max').value) || Infinity;
+
+  filteredTerrains = terrainsData.filter(t => {
+    if (region && (t.region||'').toLowerCase() !== region) return false;
+    if (typeSol && (t.type_sol||'').toLowerCase() !== typeSol) return false;
+    if (typeA && (t.type_annonce||'') !== typeA) return false;
+    if (eau === 'oui' && !t.eau_courante) return false;
+    if (eau === 'non' && t.eau_courante) return false;
+    if (elec === 'oui' && !t.electricite) return false;
+    if (elec === 'non' && t.electricite) return false;
+    const p = parseFloat(String(t.prix || '').replace(/\D/g,''));
+    if (!isNaN(p) && p > prixMax) return false;
+    if (q) {
+      const hay = normalise([t.titre, t.region, t.type_sol, t.type_annonce, t.adresse, t.description].join(' '));
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  pageTerrains = 1;
+  renderPageTerrains();
+  document.getElementById('filtre-count-terrains').textContent =
+    `${filteredTerrains.length} résultat(s)`;
+}
+
+function applyFiltersFruits() {
+  const q       = normalise(document.getElementById('search-input').value);
+  const region  = document.getElementById('search-region').value;
+  const nom     = document.getElementById('f-fruit-nom').value;
+  const prixMax = parseInt(document.getElementById('f-prix-kg-max').value) || Infinity;
+
+  filteredFruits = fruitsData.filter(f => {
+    if (region && (f.region||'').toLowerCase() !== region) return false;
+    if (nom && getFruitLabel(f).toLowerCase() !== nom.toLowerCase()) return false;
+    const p = parseFloat(getFruitPrice(f));
+    if (!isNaN(p) && p > prixMax) return false;
+    if (q) {
+      const hay = normalise([getFruitLabel(f), f.region, f.description].join(' '));
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  pageFruits = 1;
+  renderPageFruits();
+  document.getElementById('filtre-count-fruits').textContent =
+    `${filteredFruits.length} résultat(s)`;
+}
+
+function resetFiltresTerrains() {
+  ['f-type-sol','f-type-annonce','f-eau','f-elec','f-prix-max'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  applyFiltersTerrains();
+}
+function resetFiltresFruits() {
+  ['f-fruit-nom','f-prix-kg-max'].forEach(id => { document.getElementById(id).value = ''; });
+  applyFiltersFruits();
+}
+
+/* ══ PAGINATION ═══════════════════════════════════════════════════════ */
+function renderPagination(containerId, currentPage, total, onPage) {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const c = document.getElementById(containerId);
+  if (!c || totalPages <= 1) { if (c) c.innerHTML = ''; return; }
+  let html = `<button class="page-btn" ${currentPage===1?'disabled':''} onclick="(${onPage})(${currentPage-1})">‹</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages > 7 && Math.abs(i - currentPage) > 2 && i !== 1 && i !== totalPages) {
+      if (i === 2 || i === totalPages-1) html += `<span class="page-info">…</span>`;
+      continue;
+    }
+    html += `<button class="page-btn${i===currentPage?' active':''}" onclick="(${onPage})(${i})">${i}</button>`;
+  }
+  html += `<button class="page-btn" ${currentPage===totalPages?'disabled':''} onclick="(${onPage})(${currentPage+1})">›</button>`;
+  c.innerHTML = html;
+}
+
+function renderPageTerrains() {
+  const c = document.getElementById('liste-terrains');
+  if (!filteredTerrains.length) {
+    c.innerHTML = '<p class="vide">Aucun terrain ne correspond à votre recherche.</p>';
+    document.getElementById('pagination-terrains').innerHTML = '';
+    return;
+  }
+  const slice = filteredTerrains.slice((pageTerrains-1)*PAGE_SIZE, pageTerrains*PAGE_SIZE);
+  c.innerHTML = slice.map(renderCardTerrain).join('');
+  renderPagination('pagination-terrains', pageTerrains, filteredTerrains.length,
+    `function(p){pageTerrains=p;renderPageTerrains();document.getElementById('section-liste-terrains').scrollIntoView({behavior:'smooth'});}`);
+}
+
+function renderPageFruits() {
+  const c = document.getElementById('liste-fruits');
+  if (!filteredFruits.length) {
+    c.innerHTML = '<p class="vide">Aucun fruit ne correspond à votre recherche.</p>';
+    document.getElementById('pagination-fruits').innerHTML = '';
+    return;
+  }
+  const slice = filteredFruits.slice((pageFruits-1)*PAGE_SIZE, pageFruits*PAGE_SIZE);
+  c.innerHTML = slice.map(renderCardFruit).join('');
+  renderPagination('pagination-fruits', pageFruits, filteredFruits.length,
+    `function(p){pageFruits=p;renderPageFruits();document.getElementById('section-liste-fruits').scrollIntoView({behavior:'smooth'});}`);
+}
+
+/* ══ CARD RENDERERS ═══════════════════════════════════════════════════ */
+function renderCardTerrain(t) {
+  return `<article class="card-annonce" role="listitem" tabindex="0"
+    onclick="openDetailPage('terrain','${t.id}')"
+    onkeydown="if(event.key==='Enter'||event.key===' ')openDetailPage('terrain','${t.id}')">
+    <div class="card-img-wrap" style="position:relative">
+      ${makeFavoriBtn('terrain', t.id, t.titre||'')}
+      ${renderCardImg(t.photo_url,'Photo du terrain')}
+    </div>
+    <div class="card-body">
+      <div class="card-titre">${escapeHtml(t.titre||'Sans titre')}</div>
+      <div class="card-prix-line">${t.prix ? escapeHtml(t.prix)+' FCFA' : 'Prix non renseigné'}</div>
+      <div class="card-meta-box">
+        <div class="meta-cell"><strong>Type:</strong>${escapeHtml(t.type_annonce||'—')}</div>
+        <div class="meta-cell"><strong>Surface:</strong>${t.surface ? t.surface+' m²' : '—'}</div>
+        <div class="meta-cell"><strong>Région:</strong>${escapeHtml(t.region||'—')}</div>
+        ${t.eau_courante?'<div class="meta-cell"> Eau</div>':''}
+        ${t.electricite?'<div class="meta-cell"> Elec.</div>':''}
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="card-contact-info">${escapeHtml(t.contact||'—')}</span>
+      <div class="card-actions">
+        <button class="btn-contacter-wa" onclick="event.stopPropagation();ouvrirWhatsApp('${escapeHtml(t.contact||'')}')">WhatsApp</button>
+        ${!isEmail(t.contact||'') ? `<button class="btn-contacter" onclick="event.stopPropagation();window.location='tel:${escapeHtml(t.contact||'')}'" aria-label="Appeler">Appeler</button>` : ''}
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderCardFruit(f) {
+  return `<article class="card-annonce" role="listitem" tabindex="0"
+    onclick="openDetailPage('fruit','${f.id}')"
+    onkeydown="if(event.key==='Enter'||event.key===' ')openDetailPage('fruit','${f.id}')">
+    <div class="card-img-wrap" style="position:relative">
+      ${makeFavoriBtn('fruit', f.id, getFruitLabel(f))}
+      ${renderCardImg(f.photo_url,'Photo de fruit')}
+    </div>
+    <div class="card-body">
+      <div class="card-titre">${escapeHtml(getFruitLabel(f))}</div>
+      <div class="card-prix-line">${getFruitPrice(f) ? escapeHtml(String(getFruitPrice(f)))+' FCFA/kg' : 'Prix non renseigné'}</div>
+      <div class="card-meta-box">
+        <div class="meta-cell"><strong>Région:</strong>${escapeHtml(f.region||'—')}</div>
+        <div class="meta-cell"><strong>Qté:</strong>${getFruitQuantity(f) ? getFruitQuantity(f)+' kg' : '—'}</div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="card-contact-info">${escapeHtml(f.contact||'—')}</span>
+      <div class="card-actions">
+        <button class="btn-contacter-wa" onclick="event.stopPropagation();ouvrirWhatsApp('${escapeHtml(f.contact||'')}')">WhatsApp</button>
+        ${!isEmail(f.contact||'') ? `<button class="btn-contacter" onclick="event.stopPropagation();window.location='tel:${escapeHtml(f.contact||'')}'" aria-label="Appeler">Appeler</button>` : ''}
+      </div>
+    </div>
+  </article>`;
+}
+
+/* ══ CHARGER DONNÉES ══════════════════════════════════════════════════ */
+async function chargerTerrains() {
+  const c = document.getElementById('liste-terrains');
+  c.innerHTML = renderSkeleton(6);
+  const { data, error } = await db.from('terrains').select('*').order('created_at', { ascending: false });
+  if (error) { c.innerHTML = `<p class="erreur">Erreur : ${escapeHtml(error.message)}</p>`; return; }
+  if (!data?.length) { c.innerHTML = '<p class="vide">Aucune annonce de terrain pour le moment.</p>'; document.getElementById('pagination-terrains').innerHTML=''; return; }
+  terrainsData     = data;
+  filteredTerrains = [...data];
+  renderPageTerrains();
+  updateFiltreFruitsOptions();
+}
+
+async function chargerFruits() {
+  const c = document.getElementById('liste-fruits');
+  c.innerHTML = renderSkeleton(6);
+  const { data, error } = await db.from('fruits').select('*').order('created_at', { ascending: false });
+  if (error) { c.innerHTML = `<p class="erreur">Erreur : ${escapeHtml(error.message)}</p>`; return; }
+  if (!data?.length) { c.innerHTML = '<p class="vide">Aucune annonce de fruit pour le moment.</p>'; document.getElementById('pagination-fruits').innerHTML=''; return; }
+  fruitsData     = data;
+  filteredFruits = [...data];
+  updateFiltreFruitsOptions();
+  renderPageFruits();
+}
+
+function updateFiltreFruitsOptions() {
+  const sel = document.getElementById('f-fruit-nom');
+  if (!sel || !fruitsData.length) return;
+  const unique = [...new Set(fruitsData.map(f => getFruitLabel(f)).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Tous les fruits</option>' +
+    unique.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+}
+
+/* ══ MES ANNONCES ═════════════════════════════════════════════════════ */
+
+function renderMesAnnonces(items, type) {
+  if (!items?.length) return '<p class="vide">Aucune annonce publiée pour le moment.</p>';
+  return items.map(item => `
+    <article class="card-annonce" role="listitem" tabindex="0"
+      onclick="openDetailPage('${type}','${item.id}')"
+      onkeydown="if(event.key==='Enter')openDetailPage('${type}','${item.id}')">
+      ${renderCardImg(item.photo_url,'Photo')}
+      <div class="card-body">
+        <div class="card-titre">${type==='terrain' ? escapeHtml(item.titre||'Sans titre') : escapeHtml(getFruitLabel(item))}</div>
+        <div class="card-prix-line">${type==='terrain' ? (item.prix ? item.prix+' FCFA':'—') : (getFruitPrice(item) ? getFruitPrice(item)+' FCFA/kg':'—')}</div>
+        <div class="card-meta-box">
+          ${type==='terrain'
+            ? `<div class="meta-cell"><strong>Surface:</strong>${item.surface ? item.surface+' m²':'—'}</div>`
+            : `<div class="meta-cell"><strong>Qté:</strong>${getFruitQuantity(item) ? getFruitQuantity(item)+' kg':'—'}</div>`}
+          <div class="meta-cell"><strong>Région:</strong>${escapeHtml(item.region||'—')}</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="btn-danger" onclick="event.stopPropagation();deleteAnnonceHandler('${type}','${item.id}')">Supprimer</button>
+      </div>
+    </article>`).join('');
+}
+
+async function chargerMesAnnonces() {
+  const tC = document.getElementById('mes-annonces-terrains');
+  const fC = document.getElementById('mes-annonces-fruits');
+  tC.innerHTML = renderSkeleton(3);
+  fC.innerHTML = renderSkeleton(3);
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) {
+    const msg = '<p class="vide">Connectez-vous pour voir vos annonces.</p>';
+    tC.innerHTML = msg; fC.innerHTML = msg; return;
+  }
+  const uid = session.user.id;
+  const [{ data: terrains, error: tE }, { data: fruits, error: fE }] = await Promise.all([
+    db.from('terrains').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('fruits').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  ]);
+  tC.innerHTML = tE ? `<p class="erreur">Erreur : ${escapeHtml(tE.message)}</p>` : renderMesAnnonces(terrains,'terrain');
+  fC.innerHTML = fE ? `<p class="erreur">Erreur : ${escapeHtml(fE.message)}</p>` : renderMesAnnonces(fruits,'fruit');
+
+  /* Stats dashboard + favoris (une seule passe, pas de double requête) */
+  if (!tE || !fE) {
+    await chargerStatsDashboard(terrains || [], fruits || []);
+  }
+  renderMesFavoris();
+}
+
+async function deleteAnnonceHandler(type, id) {
+  if (!confirm('Supprimer définitivement cette annonce ?')) return;
+  const { error } = await db.from(type==='terrain' ? 'terrains' : 'fruits').delete().eq('id', id);
+  if (error) { alert('Erreur : ' + error.message); return; }
+  chargerMesAnnonces();
+}
+
+/* ══ PAGE DÉTAIL ══════════════════════════════════════════════════════ */
+function openDetailPage(type, id) {
+  previousSection = document.getElementById('section-mes-annonces')?.style.display === 'block'
+    ? document.getElementById('section-mes-annonces')
+    : document.getElementById('section-liste-fruits')?.style.display === 'block'
+      ? document.getElementById('section-liste-fruits')
+      : document.getElementById('section-liste-terrains');
+  history.pushState({ type, id }, null, `#detail/${type}/${id}`);
+  renderDetailPage(type, id);
+}
+
+function closeDetailPage() {
+  document.getElementById('detail-page').style.display = 'none';
+  if (previousSection) previousSection.style.display = 'block';
+  else document.getElementById('section-liste-terrains').style.display = 'block';
+  history.pushState({}, null, window.location.pathname);
+  /* reset SEO */
+  document.getElementById('page-title').textContent = 'SunuSouf — Terrains & Fruits du Sénégal';
+  document.getElementById('page-meta-desc').content  = 'Plateforme de mise en relation pour acheter, vendre des terrains agricoles et des fruits au Sénégal.';
+}
+
+async function renderDetailPage(type, id) {
+  let item = type === 'terrain'
+    ? terrainsData.find(t => String(t.id) === String(id))
+    : fruitsData.find(f => String(f.id) === String(id));
+  if (!item) {
+    const { data, error } = await db.from(type==='terrain' ? 'terrains' : 'fruits').select('*').eq('id', id).single();
+    if (!error) item = data;
+  }
+  const c = document.getElementById('detail-page-content');
+  if (!item) { c.innerHTML = '<p class="erreur">Annonce introuvable.</p>'; hideAllMainSections(); document.getElementById('detail-page').style.display='block'; return; }
+
+  /* SEO dynamique */
+  const seoTitle = type==='terrain'
+    ? `${item.titre||'Terrain'} — ${item.region||''} | SunuSouf`
+    : `${getFruitLabel(item)} à vendre — ${item.region||''} | SunuSouf`;
+  document.getElementById('page-title').textContent      = seoTitle;
+  document.getElementById('page-meta-desc').content      = type==='terrain'
+    ? `Terrain ${item.type_annonce||''} à ${item.region||''}, ${item.surface||''}m², ${item.prix||'prix à convenir'} FCFA. ${item.description||''}`
+    : `${getFruitLabel(item)} à ${item.region||''}, ${getFruitPrice(item)||''} FCFA/kg. ${item.description||''}`;
+
+  const [lat, lng] = getRegionCoords(item.region);
+  const diag       = type==='terrain' ? recommanderCultures(item) : null;
+  const imgBlock   = renderPhotoGallery(item.photo_url, type==='terrain'?'Photo du terrain':'Photo du fruit');
+  const mapId      = `detail-map-${type}-${id}`;
+  const dateP      = item.created_at ? new Date(item.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : null;
+  const prixA      = type==='terrain' ? (item.prix ? item.prix+' FCFA' : null) : (getFruitPrice(item) ? getFruitPrice(item)+' FCFA/kg' : null);
+  const shareUrl   = encodeURIComponent(SITE_URL + `#detail/${type}/${item.id}`);
+  const shareText  = encodeURIComponent(type==='terrain'
+    ? `Terrain - ${item.titre||''} | ${item.region||''} | ${item.prix||''} FCFA`
+    : `${getFruitLabel(item)} - ${item.region||''} | ${getFruitPrice(item)||''} FCFA/kg`);
+  const contact    = item.contact || '';
+  const estEmail   = isEmail(contact);
+
+  hideAllMainSections();
+  document.getElementById('detail-page').style.display = 'block';
+
+  c.innerHTML = `
+    <h1 class="detail-page-title">${type==='terrain' ? escapeHtml(item.titre||'Terrain') : escapeHtml(getFruitLabel(item))}</h1>
+    ${prixA ? `<div class="detail-prix-block"><div class="detail-prix">${escapeHtml(prixA)}</div>${dateP?`<div class="detail-date-badge">Publié le ${dateP}</div>`:''}</div>` : (dateP?`<div class="detail-prix-block"><div class="detail-date-badge">Publié le ${dateP}</div></div>`:'')}
+    ${imgBlock}
+    <div class="detail-page-map" id="${mapId}"></div>
+    <div class="detail-page-meta">
+      ${type==='terrain'
+        ? `<span>Type : ${escapeHtml(item.type_annonce||'—')}</span>`
+        : `<span>Fruit : ${escapeHtml(getFruitLabel(item))}</span>`}
+      <span>Région : ${escapeHtml(item.region||'—')}</span>
+      ${type==='terrain'
+        ? `<span>Surface : ${escapeHtml(String(item.surface||'—'))} m²</span>`
+        : `<span>Quantité : ${escapeHtml(String(getFruitQuantity(item)||'—'))} kg</span>`}
+      ${contact ? `<span>Contact : ${escapeHtml(contact)}</span>` : ''}
+    </div>
+    ${type==='terrain' ? `
+    <div class="detail-page-meta">
+      <span>Adresse : ${escapeHtml(item.adresse||'Non renseignée')}</span>
+      <span>${item.eau_courante ? ' Eau courante disponible' : 'Sans eau courante'}</span>
+      <span>${item.electricite ? ' Électricité disponible' : 'Sans électricité'}</span>
+    </div>
+    <div class="detail-page-meta detail-page-stats">
+      <span>Sol : ${escapeHtml(item.type_sol||'—')}</span>
+      <span>pH : ${escapeHtml(String(item.ph??'—'))}</span>
+      <span>Salinité : ${escapeHtml(String(item.salinite??'—'))} mS/cm</span>
+      <span>Matière org. : ${escapeHtml(String(item.matiere_organique??'—'))}%</span>
+    </div>
+    <div class="detail-page-recommandation">
+      <h2>Recommandation agricole</h2>
+      <div class="detail-row"><strong>Diagnostic pH :</strong> ${escapeHtml(diag.diagnostic_ph || diag.erreur || '')}</div>
+      <div class="detail-row"><strong>Cultures recommandées :</strong> ${diag.cultures_recommandees?.length ? escapeHtml(diag.cultures_recommandees.join(', ')) : 'Aucune recommandation.'}</div>
+      <div class="detail-row"><strong>Conseils :</strong> ${diag.alertes_et_conseils?.length ? diag.alertes_et_conseils.map(escapeHtml).join('<br>') : 'Aucun conseil particulier.'}</div>
+    </div>` : ''}
+    ${item.description ? `<div class="detail-description-block"><h3>Description</h3>${formatDescription(item.description)}</div>` : ''}
+    <div class="detail-share-block">
+      <button class="btn-share-whatsapp" onclick="window.open('https://wa.me/?text=${shareText}%20${shareUrl}','_blank')">Partager sur WhatsApp</button>
+      <button class="btn-share-link" onclick="copyDetailLink('${item.id}','${type}')">🔗 Copier le lien</button>
+      <span class="copy-toast" id="copy-toast-${item.id}">✓ Lien copié !</span>
+    </div>
+    <div class="detail-action-group">
+      ${!estEmail ? `<button class="btn-principal" onclick="window.location='tel:${escapeHtml(contact)}'" aria-label="Appeler le vendeur"> Appeler</button>` : ''}
+      ${contact ? `<button class="btn-whatsapp" onclick="ouvrirWhatsApp('${escapeHtml(contact)}')" aria-label="Contacter sur WhatsApp">${estEmail ? '✉️ Email : '+escapeHtml(contact) : ' WhatsApp'}</button>` : ''}
+    </div>`;
+
+  document.getElementById('detail-page').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  /* ── Enregistrer la vue ── */
+  marquerVue(type, id);
+
+  /* ── Badge de vues dans detail-prix-block ── */
+  const prixBlock = document.querySelector('#detail-page-content .detail-prix-block');
+  if (prixBlock) {
+    const vuesBadge = document.createElement('div');
+    vuesBadge.className = 'stats-vues-badge';
+    vuesBadge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> <span id="detail-vues-count">…</span> vues';
+    prixBlock.appendChild(vuesBadge);
+    db.from('annonce_vues').select('vues').eq('annonce_id', String(id)).eq('type_annonce', type).single()
+      .then(({ data }) => { const el = document.getElementById('detail-vues-count'); if (el) el.textContent = data?.vues ?? '0'; })
+      .catch(() => { const el = document.getElementById('detail-vues-count'); if (el) el.textContent = '0'; });
+  }
+
+  /* ── Bouton favori avant la galerie ── */
+  const galleryEl = document.querySelector('#detail-page-content .detail-gallery');
+  const favWrap = document.createElement('div');
+  favWrap.style.cssText = 'position:relative;margin-bottom:16px;display:flex;align-items:center;gap:12px;';
+  favWrap.innerHTML = makeFavoriBtn(type, id, type === 'terrain' ? (item?.titre || '') : getFruitLabel(item || {}));
+  if (galleryEl) galleryEl.insertAdjacentElement('beforebegin', favWrap);
+  else { const titleEl = document.querySelector('#detail-page-content .detail-page-title'); if (titleEl) titleEl.insertAdjacentElement('afterend', favWrap); }
+
+  /* ── Bouton signaler dans detail-share-block ── */
+  const shareBlockEl = document.querySelector('#detail-page-content .detail-share-block');
+  if (shareBlockEl) {
+    const sigBtn = document.createElement('button');
+    sigBtn.className = 'btn-signaler';
+    sigBtn.textContent = ' Signaler';
+    sigBtn.onclick = (ev) => ouvrirSignalement(type, id, ev);
+    shareBlockEl.appendChild(sigBtn);
+  }
+
+  /* Carte Leaflet chargée à la demande */
+  loadLeaflet(() => {
+    const mapEl = document.getElementById(mapId);
+    if (!mapEl) return;
+    const map = L.map(mapId, { scrollWheelZoom:true, dragging:true, tap:true, touchZoom:true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
+    map.setView([lat, lng], 12);
+    L.marker([lat, lng]).addTo(map)
+      .bindPopup(`${type==='terrain' ? (item.titre||'Terrain') : getFruitLabel(item)} — ${item.region||''}`)
+      .openPopup();
+    setTimeout(() => map.invalidateSize(), 200);
+  });
+}
+
+function copyDetailLink(id, type) {
+  const url = SITE_URL + `#detail/${type}/${id}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const t = document.getElementById(`copy-toast-${id}`);
+    if (t) { t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+  }).catch(() => prompt('Copiez ce lien :', url));
+}
+
+/* ══ NAVIGATION SECTIONS ══════════════════════════════════════════════ */
+function hideAllMainSections() {
+  ['section-liste-terrains','section-liste-fruits','section-mes-annonces',
+   'section-credits','detail-page'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('filtres-terrains').classList.remove('visible');
+  document.getElementById('filtres-fruits').classList.remove('visible');
+}
+
+function afficherSection(type) {
+  hideAllMainSections();
+  setActiveFormSection(null);
+  currentSection = type;
+  if (type === 'terrains') {
+    document.getElementById('section-liste-terrains').style.display = 'block';
+    document.getElementById('filtres-terrains').classList.add('visible');
+    document.getElementById('section-liste-terrains').scrollIntoView({ behavior:'smooth', block:'start' });
+    if (!terrainsData.length) chargerTerrains();
+  } else if (type === 'fruits') {
+    document.getElementById('section-liste-fruits').style.display = 'block';
+    document.getElementById('filtres-fruits').classList.add('visible');
+    document.getElementById('section-liste-fruits').scrollIntoView({ behavior:'smooth', block:'start' });
+    if (!fruitsData.length) chargerFruits();
+  }
+}
+
+function allerVersSection(nom) {
+  closeUserDropdown();
+  hideAllMainSections();
+  setActiveFormSection(null);
+  if (nom === 'mes-annonces') {
+    document.getElementById('section-mes-annonces').style.display = 'block';
+    document.getElementById('section-mes-annonces').scrollIntoView({ behavior:'smooth', block:'start' });
+    chargerMesAnnonces();
+  } else if (nom === 'credits') {
+    document.getElementById('section-credits').style.display = 'block';
+    window.scrollTo({ top: 0, behavior:'smooth' });
+    updateCreditsUI();
+  }
+  /* Always update credits UI when navigating */
+  updateCreditsUI();
+}
+
+const formSections = [
+  document.getElementById('poster-annonce'),
+  document.getElementById('vente-fruits'),
+].filter(Boolean);
+
+function setActiveFormSection(s) {
+  formSections.forEach(x => x.classList.toggle('active', x === s));
+  if (s) s.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+async function tryOpenTerrain() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { openLoginModal(); return; }
+  const c = await fetchCredits();
+  if (c <= 0) { openGateModal(); return; }
+  setActiveFormSection(document.getElementById('poster-annonce'));
+}
+async function tryOpenFruits() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { openLoginModal(); return; }
+  const c = await fetchCredits();
+  if (c <= 0) { openGateModal(); return; }
+  setActiveFormSection(document.getElementById('vente-fruits'));
+}
+
+/* ══ ROUTING HASH ═════════════════════════════════════════════════════ */
+function handleRoute() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#detail/')) {
+    const p = hash.replace('#detail/','').split('/');
+    if (p.length === 2) { renderDetailPage(p[0], p[1]); return; }
+  }
+  document.getElementById('detail-page').style.display = 'none';
+}
+window.addEventListener('popstate', handleRoute);
+
+/* ══ AUTH UI ══════════════════════════════════════════════════════════ */
+function mettreAJourUI() {
+  const token   = localStorage.getItem('sessionToken');
+  const contact = localStorage.getItem('currentContact') || '';
+  const zoneNon = document.getElementById('zone-non-connecte');
+  const zoneCon = document.getElementById('zone-connecte');
+  const initiale= document.getElementById('user-avatar-initiale');
+  const dropName= document.getElementById('user-dropdown-name');
+  const dropSub = document.getElementById('user-dropdown-contact');
+  const btnF    = document.getElementById('btn-seconnecter-flottant');
+  if (token) {
+    zoneNon.style.display = 'none';
+    zoneCon.style.display = 'flex';
+    if (btnF) btnF.style.display = 'none';
+    initiale.textContent  = contact ? contact.charAt(0).toUpperCase() : 'U';
+    if (dropName) dropName.textContent = contact || 'Mon compte';
+    if (dropSub)  dropSub.textContent  = contact;
+  } else {
+    zoneNon.style.display = 'flex';
+    zoneCon.style.display = 'none';
+    if (btnF) btnF.style.display = 'block';
+  }
+  updateCreditsUI();
+}
+
+db.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    const u = session.user;
+    const c = u.email || u.user_metadata?.full_name || u.user_metadata?.name || 'Utilisateur';
+    localStorage.setItem('sessionToken', session.access_token);
+    localStorage.setItem('authContact', c);
+    if (!localStorage.getItem('currentContact')) localStorage.setItem('currentContact', c);
+    mettreAJourUI();
+  }
+});
+db.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    const u = session.user;
+    const c = u.email || u.user_metadata?.full_name || u.user_metadata?.name || 'Utilisateur';
+    localStorage.setItem('sessionToken', session.access_token);
+    localStorage.setItem('authContact', c);
+    if (!localStorage.getItem('currentContact')) localStorage.setItem('currentContact', c);
+    mettreAJourUI();
+    closeLoginModal();
+    /* Recharger mes annonces si on était dessus */
+    if (document.getElementById('section-mes-annonces')?.style.display === 'block') chargerMesAnnonces();
+  }
+  if (event === 'SIGNED_OUT') {
+    localStorage.removeItem('sessionToken');
+    localStorage.removeItem('currentContact');
+    localStorage.removeItem('authContact');
+    mettreAJourUI();
+    /* Revenir à la liste principale */
+    if (document.getElementById('section-mes-annonces')?.style.display === 'block') afficherSection('terrains');
+  }
+});
+
+/* ══ MODALES ══════════════════════════════════════════════════════════ */
+const loginModal = document.getElementById('login-modal');
+function openLoginModal()  { loginModal.classList.add('active'); trapFocus(loginModal); }
+function closeLoginModal() { loginModal.classList.remove('active'); }
+function openUserDropdown() {
+  const dd  = document.getElementById('user-dropdown');
+  const btn = document.getElementById('user-menu-btn');
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  btn.setAttribute('aria-expanded', String(!isOpen));
+}
+function closeUserDropdown() {
+  const dd = document.getElementById('user-dropdown');
+  if (dd) { dd.style.display = 'none'; document.getElementById('user-menu-btn')?.setAttribute('aria-expanded','false'); }
+}
+function openGateModal()  { document.getElementById('gate-modal').classList.add('active'); }
+function closeGateModal() { document.getElementById('gate-modal').classList.remove('active'); }
+
+let currentForfait = {};
+function openPayModal(name, price, credits) {
+  currentForfait = { name, price, credits };
+  document.getElementById('modal-forfait-name').textContent  = name;
+  document.getElementById('modal-forfait-price').textContent = price;
+  document.getElementById('pay-modal').classList.add('active');
+}
+function closePayModal() { document.getElementById('pay-modal').classList.remove('active'); }
+
+function payer(method) {
+  if (WA_NUMBER === '221XXXXXXXXX') {
+    alert("⚠️ Numéro WhatsApp non configuré. Veuillez contacter l'administrateur.");
+    return;
+  }
+  const msg = encodeURIComponent(
+    `Bonjour, je souhaite acheter le ${currentForfait.name} (${currentForfait.price}) ` +
+    `via ${method==='orange' ? 'Orange Money' : 'Wave'}. Merci de me confirmer le numéro de paiement.`
+  );
+  window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank');
+  closePayModal();
+}
+
+function toggleFaq(btn) {
+  const a = btn.nextElementSibling;
+  const isOpen = a.classList.contains('open');
+  document.querySelectorAll('.faq-a.open').forEach(x => x.classList.remove('open'));
+  document.querySelectorAll('.faq-q.open').forEach(x => x.classList.remove('open'));
+  if (!isOpen) { a.classList.add('open'); btn.classList.add('open'); }
+}
+
+/* Focus trap accessibilité dans les modales */
+function trapFocus(modal) {
+  const focusable = modal.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  modal.addEventListener('keydown', function handler(e) {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+    else { if (document.activeElement === last) { e.preventDefault(); first.focus(); } }
+    if (!modal.classList.contains('active')) modal.removeEventListener('keydown', handler);
+  });
+  setTimeout(() => first?.focus(), 50);
+}
+
+/* ══ FORMULAIRES ══════════════════════════════════════════════════════ */
+
+/* Validation taille fichiers */
+function checkFilesSizes(input, warnId) {
+  const warn = document.getElementById(warnId);
+  const oversized = Array.from(input.files || []).some(f => f.size > MAX_FILE_SIZE);
+  if (warn) warn.style.display = oversized ? 'block' : 'none';
+}
+
+document.getElementById('photos-terrain').addEventListener('change', function() {
+  checkFilesSizes(this, 'warn-terrain');
+  const files = Array.from(this.files || []).filter(f => f.size <= MAX_FILE_SIZE);
+  const p = document.getElementById('preview-terrain');
+  const l = document.getElementById('preview-terrain-list');
+  if (!files.length) { p.style.display='none'; l.innerHTML=''; return; }
+  l.innerHTML = files.map(f => `<div><img src="${URL.createObjectURL(f)}" alt="Aperçu"></div>`).join('');
+  p.style.display = 'block';
+});
+
+document.getElementById('photos-fruits').addEventListener('change', function() {
+  checkFilesSizes(this, 'warn-fruit');
+  const files = Array.from(this.files || []).filter(f => f.size <= MAX_FILE_SIZE);
+  const p = document.getElementById('preview-fruit');
+  const l = document.getElementById('preview-fruit-list');
+  if (!files.length) { p.style.display='none'; l.innerHTML=''; return; }
+  l.innerHTML = files.map(f => `<div><img src="${URL.createObjectURL(f)}" alt="Aperçu"></div>`).join('');
+  p.style.display = 'block';
+});
+
+document.getElementById('form-terrain').addEventListener('submit', async e => {
+  e.preventDefault();
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { setActiveFormSection(null); openLoginModal(); return; }
+  const credits = await fetchCredits();
+  if (credits <= 0) { setActiveFormSection(null); openGateModal(); return; }
+  const contactVal = document.getElementById('contact').value.trim();
+  const warnContact = document.getElementById('warn-contact-terrain');
+  if (!isContactValide(contactVal)) {
+    if (warnContact) warnContact.style.display = 'block';
+    document.getElementById('contact').focus();
+    return;
+  }
+  if (warnContact) warnContact.style.display = 'none';
+  const btn = document.getElementById('btn-submit-terrain');
+  btn.disabled = true; btn.textContent = 'Publication en cours…';
+  /* Upload photos valides seulement */
+  const files     = Array.from(document.getElementById('photos-terrain').files || []).filter(f => f.size <= MAX_FILE_SIZE);
+  const urls      = [];
+  for (const f of files) { const u = await uploadPhoto(f, 'terrains'); if (u) urls.push(u); }
+  const photo_url = urls.length === 0 ? null : urls.length === 1 ? urls[0] : JSON.stringify(urls);
+
+  const td = {
+    titre           : document.getElementById('titre').value.trim(),
+    region          : document.getElementById('region').value,
+    adresse         : document.getElementById('adresse').value.trim(),
+    type_annonce    : document.getElementById('type-annonce').value,
+    eau_courante    : document.getElementById('eau-courante').checked,
+    electricite     : document.getElementById('electricite').checked,
+    surface         : parseFloat(document.getElementById('surface').value),
+    ph              : parseFloat(document.getElementById('ph').value),
+    type_sol        : document.getElementById('type-sol').value,
+    salinite        : parseFloat(document.getElementById('salinite').value),
+    matiere_organique: parseFloat(document.getElementById('matiere-organique').value),
+    prix            : document.getElementById('prix').value.trim(),
+    description     : document.getElementById('description').value.trim(),
+    contact         : contactVal,
+    photo_url,
+    user_id         : session.user.id
+  };
+
+  const { data: inserted, error } = await db.from('terrains').insert([td]).select();
+  if (error) {
+    showFeedback('terrain-message', 'Erreur : ' + error.message, false);
+  } else {
+    await consumeCreditServer();
+    showFeedback('terrain-message', `✅ Annonce publiée ! 1 crédit consommé. Solde : ${cachedCredits} crédit(s).`, true);
+    localStorage.setItem('currentContact', td.contact);
+    document.getElementById('form-terrain').reset();
+    document.getElementById('preview-terrain').style.display = 'none';
+    document.getElementById('warn-terrain').style.display = 'none';
+    setActiveFormSection(null);
+    updateCreditsUI();
+    /* Recharger la liste pour inclure la nouvelle annonce */
+    terrainsData = []; filteredTerrains = [];
+    const newId = inserted?.[0]?.id;
+    if (newId) setTimeout(() => openDetailPage('terrain', newId), 800);
+    else chargerTerrains();
+  }
+  btn.disabled = false; btn.textContent = "Publier l'annonce (1 crédit)";
+});
+
+document.getElementById('form-fruit').addEventListener('submit', async e => {
+  e.preventDefault();
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { setActiveFormSection(null); openLoginModal(); return; }
+  const credits = await fetchCredits();
+  if (credits <= 0) { setActiveFormSection(null); openGateModal(); return; }
+  const contactVal = document.getElementById('contact-fruits').value.trim();
+  const warnContact = document.getElementById('warn-contact-fruit');
+  if (!isContactValide(contactVal)) {
+    if (warnContact) warnContact.style.display = 'block';
+    document.getElementById('contact-fruits').focus();
+    return;
+  }
+  if (warnContact) warnContact.style.display = 'none';
+  const btn = document.getElementById('btn-submit-fruit');
+  btn.disabled = true; btn.textContent = 'Publication en cours…';
+  const files     = Array.from(document.getElementById('photos-fruits').files || []).filter(f => f.size <= MAX_FILE_SIZE);
+  const urls      = [];
+  for (const f of files) { const u = await uploadPhoto(f, 'fruits'); if (u) urls.push(u); }
+  const photo_url = urls.length === 0 ? null : urls.length === 1 ? urls[0] : JSON.stringify(urls);
+
+  const payload = {
+    fruit_nom   : document.getElementById('fruit-nom').value.trim(),
+    region      : document.getElementById('fruit-region').value,
+    prix_kg     : parseFloat(document.getElementById('prix-kg').value),
+    quantite_kg : parseFloat(document.getElementById('quantite-kg').value),
+    description : document.getElementById('description-fruits').value.trim(),
+    contact     : contactVal,
+    photo_url,
+    user_id     : session.user.id
+  };
+
+  const { data: inserted, error } = await db.from('fruits').insert([payload]).select();
+  if (error) {
+    showFeedback('fruit-message', 'Erreur : ' + error.message, false);
+  } else {
+    await consumeCreditServer();
+    showFeedback('fruit-message', `✅ Annonce publiée ! 1 crédit consommé. Solde : ${cachedCredits} crédit(s).`, true);
+    localStorage.setItem('currentContact', payload.contact);
+    document.getElementById('form-fruit').reset();
+    document.getElementById('preview-fruit').style.display = 'none';
+    document.getElementById('warn-fruit').style.display = 'none';
+    setActiveFormSection(null);
+    updateCreditsUI();
+    fruitsData = []; filteredFruits = [];
+    const newId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
+    if (newId) setTimeout(() => openDetailPage('fruit', newId), 800);
+    else chargerFruits();
+  }
+  btn.disabled = false; btn.textContent = 'Publier la vente de fruits (1 crédit)';
+});
+
+/* ══ WHATSAPP ═════════════════════════════════════════════════════════ */
+function ouvrirWhatsApp(contact) {
+  if (!contact) return;
+  if (isEmail(contact)) { window.location = `mailto:${contact}`; return; }
+  let n = contact.replace(/[\s\-\.\(\)]/g,'').replace(/^\+/,'');
+  if (n.startsWith('00')) n = n.slice(2);
+  if (n.startsWith('0') && n.length === 10) n = '221' + n.slice(1);
+  if (n.length === 9) n = '221' + n;
+  if (n.length === 8) n = '221' + n;
+  window.open('https://wa.me/' + n, '_blank');
+}
+
+/* ══ RECHERCHE AVEC DEBOUNCE ══════════════════════════════════════════ */
+let searchTimer = null;
+function debouncedSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    if (currentSection === 'terrains' && terrainsData.length) applyFiltersTerrains();
+    else if (currentSection === 'fruits' && fruitsData.length) applyFiltersFruits();
+  }, 300);
+}
+
+/* ══ EVENT LISTENERS ══════════════════════════════════════════════════ */
+document.getElementById('search-input').addEventListener('input', debouncedSearch);
+document.getElementById('search-region').addEventListener('change', () => {
+  if (currentSection === 'terrains') applyFiltersTerrains();
+  else applyFiltersFruits();
+});
+document.getElementById('btn-recherche').addEventListener('click', () => {
+  if (currentSection === 'terrains') { if (terrainsData.length) applyFiltersTerrains(); else chargerTerrains(); }
+  else { if (fruitsData.length) applyFiltersFruits(); else chargerFruits(); }
+});
+/* Filtres terrains */
+['f-type-sol','f-type-annonce','f-eau','f-elec','f-prix-max'].forEach(id =>
+  document.getElementById(id).addEventListener('change', applyFiltersTerrains));
+document.getElementById('filtre-reset-terrains').addEventListener('click', resetFiltresTerrains);
+/* Filtres fruits */
+['f-fruit-nom','f-prix-kg-max'].forEach(id =>
+  document.getElementById(id).addEventListener('change', applyFiltersFruits));
+document.getElementById('filtre-reset-fruits').addEventListener('click', resetFiltresFruits);
+
+document.getElementById('voir-terrains').addEventListener('click',    () => afficherSection('terrains'));
+document.getElementById('voir-fruits-view').addEventListener('click', () => afficherSection('fruits'));
+document.getElementById('back-to-list').addEventListener('click',     closeDetailPage);
+document.getElementById('close-login').addEventListener('click',      closeLoginModal);
+document.getElementById('ouvrir-annonce').addEventListener('click',   tryOpenTerrain);
+document.getElementById('ouvrir-fruits').addEventListener('click',    tryOpenFruits);
+
+document.getElementById('google-login').addEventListener('click', async e => {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  btn.disabled = true; btn.textContent = 'Chargement…';
+  const { error } = await db.auth.signInWithOAuth({
+    provider: 'google', options: { redirectTo: SITE_URL }
+  });
+  if (error) {
+    document.getElementById('login-form-error').textContent = 'Erreur : ' + error.message;
+    btn.disabled = false; btn.textContent = '🔵 Se connecter avec Google';
+  }
+});
+
+/* Listener global unifié */
+document.addEventListener('click', e => {
+  const t = e.target;
+  const menuBtn = document.getElementById('user-menu-btn');
+  const dd      = document.getElementById('user-dropdown');
+
+  if (menuBtn?.contains(t))      { openUserDropdown(); return; }
+  if (t?.id === 'btn-deconnexion') { db.auth.signOut(); closeUserDropdown(); return; }
+  if (t?.closest('#btn-seconnecter-flottant')) { openLoginModal(); return; }
+  if (dd && !dd.contains(t) && !menuBtn?.contains(t)) closeUserDropdown();
+
+  /* Fermer formulaire si clic en dehors des zones protégées */
+  const zoneProtegee = (
+    t.closest('#ouvrir-annonce') || t.closest('#ouvrir-fruits') ||
+    t.closest('.poster-annonce.active') || t.closest('.fruits-section.active') ||
+    t.closest('.modal-overlay') || t.closest('.footer-links') ||
+    t.closest('.credits-badge') || t.closest('.user-dropdown') ||
+    t.closest('.choice-actions') || t.closest('.filtres-bar')
+  );
+  if (!zoneProtegee && formSections.some(s => s.classList.contains('active'))) {
+    setActiveFormSection(null);
+  }
+});
+
+loginModal.addEventListener('click', e => { if (e.target === loginModal) closeLoginModal(); });
+document.getElementById('gate-modal').addEventListener('click', e => { if (e.target === document.getElementById('gate-modal')) closeGateModal(); });
+document.getElementById('pay-modal').addEventListener('click',  e => { if (e.target === document.getElementById('pay-modal'))  closePayModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeLoginModal(); closeGateModal(); closePayModal(); closeUserDropdown(); closeSignalModal(); }
+});
+
+/* ══ FAVORIS (localStorage) ═══════════════════════════════════════════ */
+function getFavoris() {
+  try { return JSON.parse(localStorage.getItem('sunusouf_favoris') || '[]'); } catch { return []; }
+}
+function setFavoris(arr) { localStorage.setItem('sunusouf_favoris', JSON.stringify(arr)); }
+function isFavori(type, id) { return getFavoris().some(f => f.type === type && String(f.id) === String(id)); }
+function toggleFavori(type, id, titre, e) {
+  if (e) e.stopPropagation();
+  const favs = getFavoris();
+  const idx  = favs.findIndex(f => f.type === type && String(f.id) === String(id));
+  if (idx >= 0) { favs.splice(idx, 1); } else { favs.push({ type, id, titre }); }
+  setFavoris(favs);
+  /* Mettre à jour tous les boutons favoris visibles */
+  document.querySelectorAll(`.btn-favori[data-type="${type}"][data-id="${id}"]`).forEach(btn => {
+    btn.classList.toggle('actif', idx < 0);
+    btn.setAttribute('aria-label', idx < 0 ? 'Retirer des favoris' : 'Ajouter aux favoris');
+    btn.textContent = idx < 0 ? '❤️' : '🤍';
+  });
+  /* Si on est dans mes-annonces, recharger les favoris + stat */
+  if (document.getElementById('section-mes-annonces')?.style.display === 'block') {
+    renderMesFavoris();
+    const statFav = document.getElementById('stat-favoris');
+    if (statFav) statFav.textContent = getFavoris().length;
+  }
+}
+
+function renderMesFavoris() {
+  const c    = document.getElementById('mes-favoris-liste');
+  const favs = getFavoris();
+  if (!c) return;
+  if (!favs.length) { c.innerHTML = '<p class="vide">Vous n\'avez pas encore de favoris.</p>'; return; }
+  const items = favs.map(f => {
+    const data = f.type === 'terrain'
+      ? terrainsData.find(t => String(t.id) === String(f.id))
+      : fruitsData.find(fr => String(fr.id) === String(f.id));
+    const titre = data ? (f.type === 'terrain' ? (data.titre || 'Terrain') : getFruitLabel(data)) : (f.titre || 'Annonce');
+    const prix  = data ? (f.type === 'terrain' ? (data.prix ? data.prix + ' FCFA' : '—') : (getFruitPrice(data) ? getFruitPrice(data) + ' FCFA/kg' : '—')) : '—';
+    const region = data?.region || '—';
+    return `<article class="card-annonce" tabindex="0"
+      onclick="openDetailPage('${f.type}','${f.id}')"
+      onkeydown="if(event.key==='Enter')openDetailPage('${f.type}','${f.id}')">
+      ${data ? renderCardImg(data.photo_url, titre) : '<div class="card-img-placeholder">Pas de photo</div>'}
+      <div class="card-body">
+        <div class="card-titre">${escapeHtml(titre)}</div>
+        <div class="card-prix-line">${escapeHtml(prix)}</div>
+        <div class="card-meta-box"><div class="meta-cell"><strong>Région:</strong>${escapeHtml(region)}</div></div>
+      </div>
+      <div class="card-footer">
+        <button class="btn-danger" onclick="event.stopPropagation();toggleFavori('${f.type}','${f.id}','',event)">❌ Retirer</button>
+        <button class="btn-contacter" onclick="event.stopPropagation();openDetailPage('${f.type}','${f.id}')">Voir →</button>
+      </div>
+    </article>`;
+  }).join('');
+  c.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">${items}</div>`;
+}
+
+function makeFavoriBtn(type, id, titre) {
+  const actif = isFavori(type, id);
+  return `<button class="btn-favori${actif?' actif':''}" data-type="${type}" data-id="${id}"
+    aria-label="${actif?'Retirer des favoris':'Ajouter aux favoris'}"
+    onclick="toggleFavori('${type}','${id}','${escapeHtml(titre)}',event)">${actif?'❤️':'🤍'}</button>`;
+}
+
+/* ══ SUIVI DE VUES ════════════════════════════════════════════════════ */
+/* On stocke les vues dans localStorage pour éviter de compter les auto-vues
+   et dans Supabase (table annonce_vues) si la table existe */
+const VUES_KEY = 'sunusouf_vues_enregistrees';
+function getVuesEnregistrees() {
+  try { return JSON.parse(localStorage.getItem(VUES_KEY) || '[]'); } catch { return []; }
+}
+function marquerVue(type, id) {
+  const vues = getVuesEnregistrees();
+  const key  = `${type}-${id}`;
+  if (vues.includes(key)) return; /* déjà vu dans cette session */
+  vues.push(key);
+  if (vues.length > 200) vues.splice(0, 50); /* ne pas dépasser 200 entrées */
+  localStorage.setItem(VUES_KEY, JSON.stringify(vues));
+  /* Incrémenter via RPC (cumul atomique) */
+  db.rpc('increment_vue', { p_type: type, p_id: String(id) })
+    .catch(() => {
+      /* Fallback manuel si la fonction RPC n'existe pas encore */
+      db.from('annonce_vues').select('vues')
+        .eq('type_annonce', type).eq('annonce_id', String(id)).single()
+        .then(({ data }) => {
+          const n = (data?.vues || 0) + 1;
+          if (data) db.from('annonce_vues').update({ vues: n }).eq('type_annonce', type).eq('annonce_id', String(id)).then(() => {});
+          else db.from('annonce_vues').insert([{ type_annonce: type, annonce_id: String(id), vues: 1 }]).then(() => {});
+        }).catch(() => {});
+    });
+}
+
+/* ══ STATS DASHBOARD ══════════════════════════════════════════════════ */
+async function chargerStatsDashboard(terrains, fruits) {
+  const dashEl = document.getElementById('dashboard-stats');
+  const blockV = document.getElementById('block-vues-detail');
+  if (!dashEl) return;
+
+  const total = (terrains?.length || 0) + (fruits?.length || 0);
+  if (!total) { dashEl.style.display = 'none'; blockV.style.display = 'none'; return; }
+  dashEl.style.display = 'grid';
+  document.getElementById('stat-total').textContent = total;
+
+  /* Récupérer les vues depuis Supabase — clé composite type+id pour éviter
+     toute collision entre un terrain et un fruit qui partageraient le même id */
+  const terrainIds = (terrains || []).map(t => String(t.id));
+  const fruitIds    = (fruits   || []).map(f => String(f.id));
+  let vuesMap = {}; /* "type-id" -> nb vues */
+  try {
+    const [{ data: vT }, { data: vF }] = await Promise.all([
+      terrainIds.length ? db.from('annonce_vues').select('annonce_id,vues').eq('type_annonce','terrain').in('annonce_id', terrainIds) : Promise.resolve({ data: [] }),
+      fruitIds.length   ? db.from('annonce_vues').select('annonce_id,vues').eq('type_annonce','fruit').in('annonce_id', fruitIds)     : Promise.resolve({ data: [] }),
+    ]);
+    (vT || []).forEach(v => { vuesMap[`terrain-${v.annonce_id}`] = v.vues || 0; });
+    (vF || []).forEach(v => { vuesMap[`fruit-${v.annonce_id}`]   = v.vues || 0; });
+  } catch (_) {}
+
+  const totalVues = Object.values(vuesMap).reduce((a, b) => a + b, 0);
+  document.getElementById('stat-vues').textContent = totalVues;
+
+  /* Mes favoris enregistrés localement (toutes annonces confondues) */
+  document.getElementById('stat-favoris').textContent = getFavoris().length;
+
+  /* Tableau vues par annonce */
+  blockV.style.display = 'block';
+  const allItems = [
+    ...(terrains || []).map(t => ({ type:'terrain', id:t.id, titre: t.titre || 'Terrain', region: t.region })),
+    ...(fruits   || []).map(f => ({ type:'fruit',   id:f.id, titre: getFruitLabel(f),      region: f.region })),
+  ].sort((a, b) => (vuesMap[`${b.type}-${b.id}`] || 0) - (vuesMap[`${a.type}-${a.id}`] || 0));
+
+  const maxVues = Math.max(...allItems.map(i => vuesMap[`${i.type}-${i.id}`] || 0), 1);
+  document.getElementById('vues-detail-content').innerHTML = `
+    <table class="vues-table">
+      <thead><tr><th>Annonce</th><th>Région</th><th>Type</th><th>Vues</th><th>Popularité</th></tr></thead>
+      <tbody>${allItems.map(item => {
+        const v   = vuesMap[`${item.type}-${item.id}`] || 0;
+        const pct = Math.round((v / maxVues) * 100);
+        return `<tr onclick="openDetailPage('${item.type}','${item.id}')" style="cursor:pointer">
+          <td>${escapeHtml(item.titre)}</td>
+          <td>${escapeHtml(item.region||'—')}</td>
+          <td>${item.type === 'terrain' ? 'Terrain' : 'Fruit'}</td>
+          <td><strong>${v}</strong></td>
+          <td><div class="vue-bar" style="width:${Math.max(pct,4)}px" title="${v} vues"></div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+/* chargerMesAnnonces patch supprimé — stats/favoris intégrés directement */
+
+/* ══ SIGNALEMENT ══════════════════════════════════════════════════════ */
+let signalContext = { type: null, id: null };
+
+function ouvrirSignalement(type, id, e) {
+  if (e) e.stopPropagation();
+  signalContext = { type, id };
+  document.getElementById('signal-form-content').style.display = 'block';
+  document.getElementById('signal-success-content').style.display = 'none';
+  document.getElementById('signal-error').textContent = '';
+  document.querySelectorAll('input[name="signal-raison"]').forEach(r => r.checked = false);
+  document.getElementById('signal-modal').classList.add('active');
+}
+function closeSignalModal() {
+  document.getElementById('signal-modal').classList.remove('active');
+}
+async function envoyerSignalement() {
+  const raison = document.querySelector('input[name="signal-raison"]:checked')?.value;
+  if (!raison) { document.getElementById('signal-error').textContent = 'Veuillez choisir une raison.'; return; }
+  /* Enregistrer le signalement (fire-and-forget) */
+  await db.from('signalements').insert([{
+    type_annonce : signalContext.type,
+    annonce_id   : String(signalContext.id),
+    raison,
+  }]).catch(() => {});
+  document.getElementById('signal-form-content').style.display = 'none';
+  document.getElementById('signal-success-content').style.display = 'block';
+}
+document.getElementById('signal-modal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('signal-modal')) closeSignalModal();
+});
+
+/* renderDetailPage patch supprimé — favori/vue/signalement intégrés directement */
+
+/* card patches supprimés — favori intégré directement dans renderCardTerrain/Fruit */
+
+/* ══ INIT ═════════════════════════════════════════════════════════════ */
+mettreAJourUI();
+handleRoute();
+
+/* Charger terrains si pas encore redirigé vers une page détail */
+if (!window.location.hash.startsWith('#detail/')) {
+  afficherSection('terrains');
+}
+</script>
+</body>
+</html>

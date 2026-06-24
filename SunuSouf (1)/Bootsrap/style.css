@@ -1,0 +1,146 @@
+.ligne1{
+
+    height: 120px;
+
+   
+
+}
+
+.dFlexSbeet{
+
+    display: flex;
+
+    justify-content: space-between;
+
+}
+
+.logo{
+
+    width: 26%;
+
+ 
+
+}
+
+.nav{
+
+    width: 70%;
+
+  
+
+}
+
+.ligne2{
+
+    height: 55px;
+
+}
+
+.ligne3{
+
+    height: 115px;
+
+
+
+
+
+}
+.CT{
+
+    background-color: rgb(126, 124, 84);
+
+}
+.actu{
+
+    width:14%;
+
+}
+
+
+.ligne4{
+
+    height: 120px;
+
+}
+
+.inci{
+
+    width: 26%;
+
+
+
+}
+
+.edito{
+
+    width: 70%;
+
+
+
+}
+
+.ligne5{
+
+  
+
+    height: 80px;
+
+}
+
+.mTop{
+
+    margin-top: 15px;
+
+}
+
+.cmenu{
+
+    width: 48%;
+}
+.cmenubgGrey{
+
+    width: 48%;
+    background-color: grey;
+
+}
+.bgGrey{
+
+    background-color: grey;
+
+}
+
+@media (max-width: 430px){
+    .CT{
+        background-color: rgb(8, 0, 255);
+    }
+    .bgGrey{
+        width: 100%;
+    }
+    .ligne3{
+        display:flex;
+        flex-direction: column;
+    }
+}
+@media (max-width:375px){
+    .cmenubgGrey{
+        background-color: rgb(255, 30, 180);
+    }
+}
+@media (max-width: 360px){
+    .inci {
+        background-color: rgb(255, 0, 0);
+    }
+    .edito{
+        background-color: rgb(255, 0, 0);
+    }
+}
+@media (max-width: 375px){
+    .actu-rouge{
+        background-color: rgb(255, 0, 0);
+    }
+}
+@media (max-width: 430px){
+   .ligne5 {
+        display: none;
+    }
+}
